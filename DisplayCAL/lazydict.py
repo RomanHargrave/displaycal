@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import codecs
 import json
 import os
@@ -182,20 +182,20 @@ class LazyDict(dict):
 				if errors:
 					self.errors = errors
 			else:
-				handle_error(UserWarning(u"Warning - file not found:\n\n%s" % 
+				handle_error(UserWarning("Warning - file not found:\n\n%s" % 
 										 safe_unicode(path)), tb=False)
 				return
 			try:
 				with codecs.open(path, "rU", self.encoding, self.errors) as f:
 					self.parse(f)
-			except EnvironmentError, exception:
+			except EnvironmentError as exception:
 				if raise_exceptions:
 					raise
 				handle_error(exception)
-			except Exception, exception:
+			except Exception as exception:
 				if raise_exceptions:
 					raise
-				handle_error(UserWarning(u"Error parsing file:\n\n%s\n\n%s" %
+				handle_error(UserWarning("Error parsing file:\n\n%s\n\n%s" %
 										 tuple(safe_unicode(s) for s in
 											   (path, exception))), tb=False)
 
@@ -407,15 +407,15 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			if quote:
 				line_rstrip = line.rstrip()
 			if self.debug:
-				print 'LINE', repr(line)
+				print('LINE', repr(line))
 			if not quote and style not in block_styles and line_lwstrip.startswith("#"):
 				# Ignore comments
 				pass
 			elif quote and line_rstrip and line_rstrip[-1] == quote:
 				if self.debug:
-					print "END QUOTE"
+					print("END QUOTE")
 				if self.debug:
-					print "+ APPEND STRIPPED", repr(line.strip())
+					print("+ APPEND STRIPPED", repr(line.strip()))
 				value.append(line.strip())
 				self._collect(key, value, ">i")
 				style = None
@@ -431,10 +431,10 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 									  i))
 				else:
 					if self.debug:
-						print "START QUOTE"
+						print("START QUOTE")
 					quote = line_lwstrip[0]
 					if self.debug:
-						print "+ APPEND LWSTRIPPED", repr(line_lwstrip)
+						print("+ APPEND LWSTRIPPED", repr(line_lwstrip))
 					value.append(line_lwstrip)
 			elif line.startswith("  ") and (style in block_styles or
 											line_lwstrip != "\n"):
@@ -446,11 +446,11 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 														   line)), i))
 					line = line.strip() + "\n"
 					if self.debug:
-						print "APPEND STRIPPED + \\n", repr(line)
+						print("APPEND STRIPPED + \\n", repr(line))
 				else:
 					line = line[2:]
 					if self.debug:
-						print "APPEND [2:]", repr(line)
+						print("APPEND [2:]", repr(line))
 				value.append(line)
 			elif not quote and line_lwstrip != "\n" and not line.startswith(" "):
 				if key and value:
@@ -482,7 +482,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					if token.startswith("#"):
 						# Block or folded
 						if self.debug:
-							print 'IN BLOCK', repr(key), style
+							print('IN BLOCK', repr(key), style)
 						value = []
 						continue
 					if style and token:
@@ -497,12 +497,12 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				if style or not token:
 					# Block or folded
 					if self.debug:
-						print 'IN BLOCK', repr(key), style
+						print('IN BLOCK', repr(key), style)
 					value = []
 				else:
 					# Inline value
 					if self.debug:
-						print 'IN PLAIN', repr(key), repr(token)
+						print('IN PLAIN', repr(key), repr(token))
 					style = None
 					if token.startswith("#"):
 						value = []
@@ -512,7 +512,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 						(len(token_rstrip) < 2 or
 						 token_rstrip[0] != token_rstrip[-1])):
 						if self.debug:
-							print "START QUOTE"
+							print("START QUOTE")
 						quote = token_rstrip[0]
 					else:
 						style = ">i"
@@ -522,35 +522,35 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 							token_rstrip = token_rstrip[:comment_offset].rstrip()
 					token_rstrip += "\n"
 					if self.debug:
-						print "SET", repr(token_rstrip)
+						print("SET", repr(token_rstrip))
 					value = [token_rstrip]
 			else:
 				#if line_lwstrip == "\n":
 				if True:
 					if self.debug:
-						print "APPEND LWSTRIPPED", repr(line_lwstrip)
+						print("APPEND LWSTRIPPED", repr(line_lwstrip))
 					line = line_lwstrip
 				else:
 					if self.debug:
-						print "APPEND", repr(line)
+						print("APPEND", repr(line))
 				value.append(line)
 		if quote:
 			raise ValueError("EOF while scanning quoted scalar (%r line %i)" %
 							 (safe_str(getattr(fileobj, "name", line)), i))
 		if key:
 			if self.debug:
-				print "FINAL COLLECT"
+				print("FINAL COLLECT")
 			self._collect(key, value, style)
 
 	def _collect(self, key, value, style=None):
 		if self.debug:
-			print 'COLLECT', key, value, style
+			print('COLLECT', key, value, style)
 		chars = "".join(value)
 		if style != ">i":
 			chars = chars.rstrip(" ")
 		if not style or style.startswith(">"):
 			if self.debug:
-				print 'FOLD'
+				print('FOLD')
 			out = ""
 			state = 0
 			for c in chars:
@@ -570,14 +570,14 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			out = chars
 		out = out.lstrip(" ")
 		if self.debug:
-			print "OUT", repr(out)
+			print("OUT", repr(out))
 		if not style:
 			# Inline value
 			out = out.rstrip()
 		elif style.endswith("+"):
 			# Keep trailing newlines
 			if self.debug:
-				print 'KEEP'
+				print('KEEP')
 			pass
 		else:
 			out = out.rstrip("\n")
@@ -586,19 +586,19 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			elif style.endswith("-"):
 				# Chomp trailing newlines
 				if self.debug:
-					print 'CHOMP'
+					print('CHOMP')
 				pass
 			else:
 				# Clip trailing newlines (default)
 				if self.debug:
-					print 'CLIP'
+					print('CLIP')
 				if chars.endswith("\n"):
 					out += "\n"
 		self[key] = out
 
 
 def test():
-	from StringIO import StringIO
+	from io import StringIO
 	from time import time
 
 	from jsondict import JSONDict
@@ -610,8 +610,8 @@ def test():
 	def y(doc):
 		try:
 			return yaml.safe_load(StringIO(doc))
-		except Exception, e:
-			print "%s:" % e.__class__.__name__, e
+		except Exception as e:
+			print("%s:" % e.__class__.__name__, e)
 			return e
 
 
@@ -619,26 +619,26 @@ def test():
 		l = LazyDict_YAML_Lite(debug=True)
 		try:
 			l.parse(StringIO(doc))
-		except Exception, e:
-			print "%s:" % e.__class__.__name__, e
+		except Exception as e:
+			print("%s:" % e.__class__.__name__, e)
 			return e
 		return l
 
 
 	def c(doc, do_assert=True):
-		print "-" * 80
-		print repr(doc)
+		print("-" * 80)
+		print(repr(doc))
 		a = l(doc)
-		print 'LazyDict_YAML_Lite', a
+		print('LazyDict_YAML_Lite', a)
 		b = y(doc)
-		print 'yaml.YAML         ', b
+		print('yaml.YAML         ', b)
 		identical = isinstance(a, dict) and isinstance(b, dict) and a == b
-		print 'Identical?', identical
+		print('Identical?', identical)
 		if do_assert:
 			assert identical
 
 
-	print "Testing YAML Lite to YAML conformance"
+	print("Testing YAML Lite to YAML conformance")
 	c('TEST: \n  "ABC\n\n  DEF\n"  \n    \n\n\n\n')
 	c('TEST: \n  "ABC\n\n  DEF"')
 	c('TEST: \n  "ABC\n  DEF\n"')
@@ -669,8 +669,8 @@ def test():
 
 	c('TEST: # Comment', do_assert=False)
 
-	print "=" * 80
-	print "Performance test"
+	print("=" * 80)
+	print("Performance test")
 
 	io = StringIO('''{"test1": "Value 1",
 "test2": "Value 2 Line 1\\nValue 2 Line 2\\n\\nValue 2 Line 4\\n",
@@ -680,14 +680,14 @@ def test():
 
 	d = JSONDict()
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		d.parse(io)
 		io.seek(0)
 	jt = time() - ts
 
 	d = LazyDict_JSON()
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		d.parse(io)
 		io.seek(0)
 	ljt = time() - ts
@@ -705,36 +705,36 @@ def test():
 
 	d = LazyDict_YAML_UltraLite()
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		d.parse(io)
 		io.seek(0)
 	yult = time() - ts
 
 	d = LazyDict_YAML_Lite()
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		d.parse(io)
 		io.seek(0)
 	ylt = time() - ts
 
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		yaml.safe_load(io)
 		io.seek(0)
 	yt = time() - ts
 
 	ts = time()
-	for i in xrange(10000):
+	for i in range(10000):
 		yaml.load(io, Loader=CSafeLoader)
 		io.seek(0)
 	yct = time() - ts
 
-	print "JSONDict(demjson): %.3fs" % jt
-	print "LazyDict_JSON: %.3fs" % ljt
-	print "LazyDict_YAML_UltraLite: %.3fs," % yult, "vs JSONDict: %.1fx speed," % round(jt / yult, 1), "vs YAML_Lite: %.1fx speed," % round(ylt / yult, 1), "vs PyYAML: %.1fx speed," % round(yt / yult, 1)
-	print "LazyDict_YAML_Lite: %.3fs," % ylt, "vs JSONDict: %.1fx speed," % round(jt / ylt, 1), "vs PyYAML: %.1fx speed," % round(yt / ylt, 1)
-	print "yaml.safe_load: %.3fs" % yt
-	print "yaml.load(CSafeLoader): %.3fs" % yct
+	print("JSONDict(demjson): %.3fs" % jt)
+	print("LazyDict_JSON: %.3fs" % ljt)
+	print("LazyDict_YAML_UltraLite: %.3fs," % yult, "vs JSONDict: %.1fx speed," % round(jt / yult, 1), "vs YAML_Lite: %.1fx speed," % round(ylt / yult, 1), "vs PyYAML: %.1fx speed," % round(yt / yult, 1))
+	print("LazyDict_YAML_Lite: %.3fs," % ylt, "vs JSONDict: %.1fx speed," % round(jt / ylt, 1), "vs PyYAML: %.1fx speed," % round(yt / ylt, 1))
+	print("yaml.safe_load: %.3fs" % yt)
+	print("yaml.load(CSafeLoader): %.3fs" % yct)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ def getevtobjname(event, window=None):
 			event_object = window.FindWindowById(event.GetId())
 		if event_object and hasattr(event_object, "GetName"):
 			return event_object.GetName()
-	except Exception, exception:
+	except Exception as exception:
 		pass
 
 
@@ -34,7 +34,7 @@ def getevttype(event):
 					attr = getattr(wx, name)
 					if hasattr(attr, "evtType"):
 						wxEventTypes[attr.evtType[0]] = name
-		except Exception, exception:
+		except Exception as exception:
 			pass
 	typeId = event.GetEventType()
 	if typeId in wxEventTypes:
@@ -105,7 +105,7 @@ def handle_error(error, parent=None, silent=False, tb=True):
 			else:
 				dlg.ShowModal()
 				dlg.Destroy()
-		except Exception, exception:
+		except Exception as exception:
 			safe_print("Warning: handle_error():", safe_unicode(exception))
 
 

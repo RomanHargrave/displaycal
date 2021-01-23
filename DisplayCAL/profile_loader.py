@@ -26,7 +26,7 @@ if sys.platform == "win32":
 	import traceback
 	import warnings
 	import winerror
-	import _winreg
+	import winreg
 
 	import pywintypes
 	import win32api
@@ -84,7 +84,7 @@ if sys.platform == "win32":
 
 			try:
 				ts = taskscheduler.TaskScheduler()
-			except Exception, exception:
+			except Exception as exception:
 				safe_print("Warning - could not access task scheduler:",
 						   exception)
 			else:
@@ -142,8 +142,8 @@ if sys.platform == "win32":
 					try:
 						# Create the main task
 						created = ts.create_task(taskname,
-											 u"Open Source Developer, "
-											 u"Florian Höch",
+											 "Open Source Developer, "
+											 "Florian Höch",
 											 "This task launches the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
@@ -153,8 +153,8 @@ if sys.platform == "win32":
 											 actions=actions)
 						# Create the supplementary task
 						created = ts.create_task(taskname + " - Daily Restart",
-											 u"Open Source Developer, "
-											 u"Florian Höch",
+											 "Open Source Developer, "
+											 "Florian Höch",
 											 "This task restarts the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
@@ -162,7 +162,7 @@ if sys.platform == "win32":
 											 replace_existing=True,
 											 triggers=[daily],
 											 actions=actions)
-					except Exception, exception:
+					except Exception as exception:
 						if debug:
 							exception = traceback.format_exc()
 						safe_print("Warning - Could not create task %r:" %
@@ -186,7 +186,7 @@ if sys.platform == "win32":
 									safe_print("Removing", entry)
 									try:
 										os.remove(entry)
-									except EnvironmentError, exception:
+									except EnvironmentError as exception:
 										safe_print(exception)
 				if "Windows 10" in win_ver()[0]:
 					# Disable Windows Calibration Loader.
@@ -195,7 +195,7 @@ if sys.platform == "win32":
 					ms_cal_loader = r"\Microsoft\Windows\WindowsColorSystem\Calibration Loader"
 					try:
 						ts.disable(ms_cal_loader)
-					except Exception, exception:
+					except Exception as exception:
 						safe_print("Warning - Could not disable task %r:" %
 								   ms_cal_loader, exception)
 						if ts.stdout:
@@ -302,7 +302,7 @@ if sys.platform == "win32":
 			list_ctrl.DeleteAllItems()
 			for i, (display_edid,
 					profile,
-					desc) in enumerate(self.pl.devices2profiles.itervalues()):
+					desc) in enumerate(self.pl.devices2profiles.values()):
 				index = list_ctrl.InsertStringItem(i, "")
 				display = display_edid[0].replace("[PRIMARY]", 
 												  lang.getstr("display.primary"))
@@ -312,7 +312,7 @@ if sys.platform == "win32":
 					continue
 				try:
 					profile = ICCP.ICCProfile(profile)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
+				except (IOError, ICCP.ICCProfileInvalidError) as exception:
 					pass
 				else:
 					if isinstance(profile.tags.get("meta"), ICCP.DictType):
@@ -389,7 +389,7 @@ if sys.platform == "win32":
 			dc.SetFont(grid.GetLabelFont())
 			grid.SetRowLabelSize(max(dc.GetTextExtent("99")[0],
 									 grid.GetDefaultRowSize()))
-			for i in xrange(grid.GetNumberCols()):
+			for i in range(grid.GetNumberCols()):
 				if i > 1:
 					attr = wx.grid.GridCellAttr()
 					attr.SetReadOnly(True) 
@@ -559,7 +559,7 @@ if sys.platform == "win32":
 				if event.GetId() == self.add_btn.Id:
 					# If it already exists, select the respective row
 					if path.lower() in self._exceptions:
-						for row in xrange(self.grid.GetNumberRows()):
+						for row in range(self.grid.GetNumberRows()):
 							exception = os.path.join(self.grid.GetCellValue(row, 3),
 													 self.grid.GetCellValue(row, 2))
 							if exception.lower() == path.lower():
@@ -760,10 +760,10 @@ if sys.platform == "win32":
 						safe_glob(os.path.join(iccprofiles[0], "*.cdmp"))):
 				try:
 					profile = ICCP.ICCProfile(pth)
-				except ICCP.ICCProfileInvalidError, exception:
+				except ICCP.ICCProfileInvalidError as exception:
 					safe_print("%s:" % pth, exception)
 					continue
-				except IOError, exception:
+				except IOError as exception:
 					safe_print(exception)
 					continue
 				if profile.profileClass == "mntr":
@@ -793,7 +793,7 @@ if sys.platform == "win32":
 			dlg.Destroy()
 
 		def identify_displays(self, event):
-			for display, frame in self.display_identification_frames.items():
+			for display, frame in list(self.display_identification_frames.items()):
 				if not frame:
 					self.display_identification_frames.pop(display)
 			for display, edid, moninfo, device in self.monitors:
@@ -820,7 +820,7 @@ if sys.platform == "win32":
 				return
 			try:
 				profile = ICCP.ICCProfile(self.profiles[pindex])
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 										 "\n" + self.profiles[pindex]), self)
 				return
@@ -930,7 +930,7 @@ if sys.platform == "win32":
 				profiles = []
 			try:
 				fn(arg0,  devicekey=devicekey)
-			except Exception, exception:
+			except Exception as exception:
 				safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
 													  arg0,
 													  devicekey),
@@ -1068,8 +1068,8 @@ class ProfileLoader(object):
 		self.devices2profiles = {}
 		self.ramps = {}
 		self.linear_vcgt_values = ([], [], [])
-		for j in xrange(3):
-			for k in xrange(256):
+		for j in range(3):
+			for k in range(256):
 				self.linear_vcgt_values[j].append([float(k), k * 257])
 		self.setgammaramp_success = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
@@ -1311,7 +1311,7 @@ class ProfileLoader(object):
 								lstr = lang.getstr("profile.load_on_login")
 								if lang.getcode() != "de":
 									label = label[0].lower() + label[1:]
-								label = lstr + u" && " + label
+								label = lstr + " && " + label
 							item = MenuItem(menu, -1, label,
 											   kind=kind)
 							if not oxform:
@@ -1385,8 +1385,7 @@ class ProfileLoader(object):
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
 													   manual_override=None) or self._animate):
 						count = len(self.pl.monitors)
-						if len(filter(lambda (i, success): not success,
-									  sorted(self.pl.setgammaramp_success.items())[:count or 1])) != 0:
+						if len([i_success for i_success in sorted(self.pl.setgammaramp_success.items())[:count or 1] if not i_success[1]]) != 0:
 							icon = self._error_icon
 						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
@@ -1464,7 +1463,7 @@ class ProfileLoader(object):
 					try:
 						sp.call(["control", "/name", "Microsoft.Display",
 								 "/page", "Settings"], close_fds=True)
-					except Exception, exception:
+					except Exception as exception:
 						wx.Bell()
 						safe_print(exception)
 
@@ -1512,7 +1511,7 @@ class ProfileLoader(object):
 						exceptions = []
 						for key, (enabled,
 								  reset,
-								  path) in dlg._exceptions.iteritems():
+								  path) in dlg._exceptions.items():
 							exceptions.append("%i:%i:%s" %
 											  (enabled, reset, path))
 							safe_print("Enabled=%s" % bool(enabled),
@@ -1547,7 +1546,7 @@ class ProfileLoader(object):
 						numframes = 4
 					else:
 						numframes = 1
-					for i in xrange(numframes):
+					for i in range(numframes):
 						if i:
 							rad = i / float(numframes)
 							bitmap = config.geticon(16, "apply-profiles-tray-%i" % (360 * rad))
@@ -1620,14 +1619,14 @@ class ProfileLoader(object):
 							if (self.pl.setgammaramp_success.get(i) and
 								self.pl._reset_gamma_ramps):
 								desc = (lang.getstr("linear").capitalize() +
-										u" / %s" % desc)
+										" / %s" % desc)
 							elif (not self.pl.setgammaramp_success.get(i) or
 								  not profile_key):
 								desc = (lang.getstr("unknown") +
-										u" / %s" % desc)
+										" / %s" % desc)
 							display = display.replace("[PRIMARY]", 
 													  lang.getstr("display.primary"))
-							text += u"\n%s: %s" % (display, desc)
+							text += "\n%s: %s" % (display, desc)
 					if not show_notification:
 						if debug > 1:
 							safe_print("[DEBUG] /show_notification")
@@ -1651,7 +1650,7 @@ class ProfileLoader(object):
 				self.gdi32 = ctypes.windll.gdi32
 				self.gdi32.GetDeviceGammaRamp.restype = ctypes.c_bool
 				self.gdi32.SetDeviceGammaRamp.restype = ctypes.c_bool
-			except Exception, exception:
+			except Exception as exception:
 				self.gdi32 = None
 				safe_print(exception)
 				self.taskbar_icon.show_notification(safe_unicode(exception))
@@ -1659,7 +1658,7 @@ class ProfileLoader(object):
 			if self.use_madhcnet:
 				try:
 					self.madvr = madvr.MadTPG()
-				except Exception, exception:
+				except Exception as exception:
 					safe_print(exception)
 					if safe_unicode(exception) != lang.getstr("madvr.not_found"):
 						self.taskbar_icon.show_notification(safe_unicode(exception))
@@ -1902,7 +1901,7 @@ class ProfileLoader(object):
 			loader_args.append("--profile-associations")
 			try:
 				run_as_admin(cmd, loader_args)
-			except pywintypes.error, exception:
+			except pywintypes.error as exception:
 				if exception.args[0] != winerror.ERROR_CANCELLED:
 					show_result_dialog(exception)
 			else:
@@ -1996,13 +1995,12 @@ class ProfileLoader(object):
 			win32gui.EnumThreadWindows(self._tid,
 									   self._enumerate_own_windows_callback,
 									   windows)
-		except pywintypes.error, exception:
+		except pywintypes.error as exception:
 			pass
-		windows.extend(filter(lambda window: not isinstance(window, wx.Dialog) and
+		windows.extend([window for window in wx.GetTopLevelWindows() if not isinstance(window, wx.Dialog) and
 											 window.Name != "TaskBarNotification" and
 											 window.Name != "DisplayIdentification" and
-											 window.Name != "profile_info",
-							  wx.GetTopLevelWindows()))
+											 window.Name != "profile_info"])
 		numwindows = len(windows)
 		if numwindows < self.numwindows:
 			# One of our windows has been closed by an external event
@@ -2056,9 +2054,9 @@ class ProfileLoader(object):
 		ts = time.time()
 		key_name = r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration"
 		try:
-			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, key_name)
-			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-		except WindowsError, exception:
+			key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_name)
+			numsubkeys, numvalues, mtime = winreg.QueryInfoKey(key)
+		except WindowsError as exception:
 			# Windows XP or Win10 >= 1903 if not running elevated
 			if (exception.args[0] != errno.ENOENT or
 				sys.getwindowsversion() >= (6, )):
@@ -2071,21 +2069,21 @@ class ProfileLoader(object):
 			if (not self._active_displays or
 				self._active_displays != get_active_display_devices("DeviceKey")):
 				has_display_changed = True
-		for i in xrange(numsubkeys):
+		for i in range(numsubkeys):
 			try:
-				subkey_name = _winreg.EnumKey(key, i)
-				subkey = _winreg.OpenKey(key, subkey_name)
-			except WindowsError, exception:
+				subkey_name = winreg.EnumKey(key, i)
+				subkey = winreg.OpenKey(key, subkey_name)
+			except WindowsError as exception:
 				warnings.warn(r"Registry access failed: %s: HKLM\%s\%s" %
 							  (safe_str(exception), key_name, subkey_name),
 							  Warning)
 				continue
 			value_name = "SetId"
 			try:
-				display = _winreg.QueryValueEx(subkey, "SetId")[0]
+				display = winreg.QueryValueEx(subkey, "SetId")[0]
 				value_name = "Timestamp"
-				timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
-			except WindowsError, exception:
+				timestamp = struct.unpack("<Q", winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
+			except WindowsError as exception:
 				warnings.warn(r"Registry access failed: %s: %s (HKLM\%s\%s)" %
 							  (safe_str(exception), value_name, key_name,
 							   subkey_name), Warning)
@@ -2096,9 +2094,9 @@ class ProfileLoader(object):
 				if not dry_run:
 					self._current_display = display
 					self._current_timestamp = timestamp
-			_winreg.CloseKey(subkey)
+			winreg.CloseKey(subkey)
 		if key:
-			_winreg.CloseKey(key)
+			winreg.CloseKey(key)
 		safe_print("Display configuration change detection took %.6f ms" %
 				   ((time.time() - ts) * 1000.0))
 		if not dry_run:
@@ -2131,7 +2129,7 @@ class ProfileLoader(object):
 	def _check_display_conf_wrapper(self):
 		try:
 			self._check_display_conf()
-		except Exception, exception:
+		except Exception as exception:
 			if self.lock.locked():
 				self.lock.release()
 			wx.CallAfter(self._handle_fatal_error, traceback.format_exc())
@@ -2184,7 +2182,7 @@ class ProfileLoader(object):
 								   (key, display))
 					self._next = False
 					break
-				except Exception, exception:
+				except Exception as exception:
 					if (exception.args[0] != errno.ENOENT and
 						exception.args != self._last_exception_args) or debug:
 						self._last_exception_args = exception.args
@@ -2287,7 +2285,7 @@ class ProfileLoader(object):
 									not "vcgt" in self.profiles[key].tags):
 									self.profiles[key].tags["vcgt"] = self.profiles[key].tags["MS00"].get_vcgt()
 								self.profiles[key].tags.get("vcgt")
-							except Exception, exception:
+							except Exception as exception:
 								safe_print(exception)
 								self.profiles[key] = ICCP.ICCProfile()
 						profile = self.profiles[key]
@@ -2338,7 +2336,7 @@ class ProfileLoader(object):
 						tagData = "vcgt"
 						tagData += "\0" * 4  # Reserved
 						tagData += "\0\0\0\x01"  # Formula type
-						for channel in xrange(3):
+						for channel in range(3):
 							tagData += "\0\x01\0\0"  # Gamma 1.0
 							tagData += "\0" * 4  # Min 0.0
 							tagData += "\0\x01\0\0"  # Max 1.0
@@ -2355,8 +2353,8 @@ class ProfileLoader(object):
 					# Convert vcgt to ushort_Array_256_Array_3
 					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
 					vcgt_ramp_hack = ((ctypes.c_ushort * 256) * 3)()
-					for j in xrange(len(vcgt_values[0])):
-						for k in xrange(3):
+					for j in range(len(vcgt_values[0])):
+						for k in range(3):
 							vcgt_value = vcgt_values[k][j][1]
 							vcgt_ramp[k][j] = vcgt_value
 							# Some video drivers won't reload gamma ramps if
@@ -2406,7 +2404,7 @@ class ProfileLoader(object):
 					# Get video card gamma ramp
 					try:
 						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
-					except Exception, exception:
+					except Exception as exception:
 						if exception.args != self._last_exception_args or debug:
 							self._last_exception_args = exception.args
 							safe_print("Couldn't create DC for", moninfo["Device"],
@@ -2492,7 +2490,7 @@ class ProfileLoader(object):
 							   display)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
-				except Exception, exception:
+				except Exception as exception:
 					if exception.args != self._last_exception_args or debug:
 						self._last_exception_args = exception.args
 						safe_print("Couldn't create DC for", moninfo["Device"],
@@ -2502,7 +2500,7 @@ class ProfileLoader(object):
 					if is_buggy_video_driver:
 						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp_hack)
 					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
-				except Exception, exception:
+				except Exception as exception:
 					result = exception
 				finally:
 					win32gui.DeleteDC(hdc)
@@ -2527,7 +2525,7 @@ class ProfileLoader(object):
 						errstr = lang.getstr("calibration.load_error")
 						errors.append(": ".join([display_desc, errstr]))
 					else:
-						text = display_desc + u": "
+						text = display_desc + ": "
 						if self._reset_gamma_ramps:
 							text += lang.getstr("linear").capitalize()
 						else:
@@ -2670,7 +2668,7 @@ class ProfileLoader(object):
 		# Enumerate monitors
 		try:
 			monitors = get_real_display_devices_info()
-		except Exception, exception:
+		except Exception as exception:
 			import traceback
 			safe_print(traceback.format_exc())
 			monitors = []
@@ -2718,7 +2716,7 @@ class ProfileLoader(object):
 						   (i, moninfo["Device"]))
 			try:
 				device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
-			except pywintypes.error, exception:
+			except pywintypes.error as exception:
 				safe_print("EnumDisplayDevices(%r, 0) failed:" %
 						   moninfo["Device"], exception)
 				device0 = None
@@ -2753,7 +2751,7 @@ class ProfileLoader(object):
 					self.display_devices[device.DeviceKey] = [display, edid,
 															  device, device0]
 			self.monitors.append((display, edid, moninfo, device))
-		for display, edid, device, device0 in self.display_devices.itervalues():
+		for display, edid, device, device0 in self.display_devices.values():
 			if device.DeviceKey == device0.DeviceKey:
 				device_name = "\\".join(device.DeviceName.split("\\")[:-1])
 				safe_print(self.adapters.get(device_name,
@@ -2764,7 +2762,7 @@ class ProfileLoader(object):
 				info = display_parts[1].split(" - ", 1)
 				display_parts[1] = "@" + " ".join(info[:1])
 			if not device.StateFlags & DISPLAY_DEVICE_ACTIVE:
-				display_parts.append(u" (%s)" % lang.getstr("deactivated"))
+				display_parts.append(" (%s)" % lang.getstr("deactivated"))
 			safe_print("  |-", "".join(display_parts))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
@@ -2822,7 +2820,7 @@ class ProfileLoader(object):
 			self._hwnds_pids = set()
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
-			except pywintypes.error, exception:
+			except pywintypes.error as exception:
 				safe_print("Enumerating windows failed:", exception)
 			if (not self.__other_component[1] or
 				self.__other_component[1] == "madHcNetQueueWindow"):
@@ -2831,7 +2829,7 @@ class ProfileLoader(object):
 				# ~ 6-9ms (1ms to get PIDs)
 				try:
 					processes = win32ts.WTSEnumerateProcesses()
-				except pywintypes.error, exception:
+				except pywintypes.error as exception:
 					safe_print("Enumerating processes failed:", exception)
 				else:
 					skip = False
@@ -2852,7 +2850,7 @@ class ProfileLoader(object):
 							continue
 						try:
 							filename = get_process_filename(pid)
-						except (WindowsError, pywintypes.error), exception:
+						except (WindowsError, pywintypes.error) as exception:
 							if exception.args[0] not in (winerror.ERROR_ACCESS_DENIED,
 														 winerror.ERROR_PARTIAL_COPY,
 														 winerror.ERROR_INVALID_PARAMETER,
@@ -2899,7 +2897,7 @@ class ProfileLoader(object):
 				elif component[0]:
 					component_name = os.path.basename(component[0])
 					try:
-						info = get_file_info(component[0])["StringFileInfo"].values()
+						info = list(get_file_info(component[0])["StringFileInfo"].values())
 					except:
 						info = None
 					if info:
@@ -2934,7 +2932,7 @@ class ProfileLoader(object):
 			else:
 				# Check if gamma ramps were reset for any display
 				return (len(self._madvr_reset_cal) < len(self.monitors) or
-						True in self._madvr_reset_cal.values())
+						True in list(self._madvr_reset_cal.values()))
 		return result
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
@@ -2984,12 +2982,12 @@ class ProfileLoader(object):
 		if not self._can_fix_profile_associations():
 			return
 		for devicekey, (display_edid,
-						profile, desc) in self.devices2profiles.iteritems():
+						profile, desc) in self.devices2profiles.items():
 			if devicekey in self._fixed_profile_associations and profile:
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
-				except Exception, exception:
+				except Exception as exception:
 					safe_print("Could not get display profile for display "
 							   "device %s (%s):" % (devicekey,
 													display_edid[0]), exception)
@@ -3009,7 +3007,7 @@ class ProfileLoader(object):
 						ICCP.set_display_profile(profile, devicekey=devicekey)
 						ICCP.unset_display_profile(current_profile,
 												   devicekey=devicekey)
-					except WindowsError, exception:
+					except WindowsError as exception:
 						safe_print(exception)
 
 	def _set_display_profiles(self, dry_run=False):
@@ -3054,7 +3052,7 @@ class ProfileLoader(object):
 				try:
 					profile = ICCP.get_display_profile(path_only=True,
 													   devicekey=device.DeviceKey)
-				except Exception, exception:
+				except Exception as exception:
 					safe_print("Could not get display profile for display "
 							   "device %s (%s):" % (device.DeviceKey,
 													display_edid[0]), exception)
@@ -3075,7 +3073,7 @@ class ProfileLoader(object):
 			try:
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
-			except Exception, exception:
+			except Exception as exception:
 				safe_print("Could not get display profile for active display "
 						   "device %s (%s):" % (device.DeviceKey,
 												display), exception)
@@ -3096,7 +3094,7 @@ class ProfileLoader(object):
 						enable_per_user_profiles(devicekey=device.DeviceKey)
 					ICCP.set_display_profile(os.path.basename(correct_profile),
 											 devicekey=device.DeviceKey)
-				except WindowsError, exception:
+				except WindowsError as exception:
 					safe_print(exception)
 				else:
 					self._fixed_profile_associations.add(device.DeviceKey)
@@ -3184,7 +3182,7 @@ class ProfileLoader(object):
 			if len(exception) < 3:
 				# Malformed, ignore
 				continue
-			for i in xrange(2):
+			for i in range(2):
 				try:
 					exception[i] = int(exception[i])
 				except:
@@ -3222,7 +3220,7 @@ def get_display_name_edid(device, moninfo=None, index=None,
 		display = safe_unicode(device.DeviceString)
 		try:
 			edid = get_edid(device=device)
-		except Exception, exception:
+		except Exception as exception:
 			pass
 	else:
 		display = lang.getstr("unknown")
@@ -3238,7 +3236,7 @@ def get_display_name_edid(device, moninfo=None, index=None,
 		if moninfo["Flags"] & MONITORINFOF_PRIMARY:
 			display += " [PRIMARY]"
 		if moninfo.get("_adapter") and include_adapter:
-			display += u" - %s" % moninfo["_adapter"].DeviceString
+			display += " - %s" % moninfo["_adapter"].DeviceString
 	if index is not None:
 		display = "%i. %s" % (index + 1, display)
 	return display, edid
@@ -3254,7 +3252,7 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 	try:
 		profile = ICCP.ICCProfile(profile_path)
 		profile_desc = profile.getDescription()
-	except Exception, exception:
+	except Exception as exception:
 		if not isinstance(exception, IOError):
 			exception = traceback.format_exc()
 		safe_print("Could not get description of profile %s:" % profile_path,
@@ -3265,7 +3263,7 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 		if (basename != profile_desc and
 			include_basename_if_different and
 			name not in (profile_desc, safe_asciize(profile_desc))):
-			return u"%s (%s)" % (profile_desc, basename)
+			return "%s (%s)" % (profile_desc, basename)
 		return profile_desc
 	return profile_path
 
@@ -3353,7 +3351,7 @@ def main():
 					# Name and valid values
 					valid = config.valid_values.get(cfgname)
 					if valid:
-						valid = u"[%s]" % u"|".join(u"%s" % v for v in valid)
+						valid = "[%s]" % "|".join("%s" % v for v in valid)
 					else:
 						valid = config.valid_ranges.get(cfgname)
 						if valid:
@@ -3361,7 +3359,7 @@ def main():
 						elif isinstance(cfgdefault, int):
 							# Boolean
 							valid = "[0|1]"
-						elif isinstance(cfgdefault, basestring):
+						elif isinstance(cfgdefault, str):
 							# String
 							valid = "<string>"
 							cfgdefault = "'%s'" % cfgdefault

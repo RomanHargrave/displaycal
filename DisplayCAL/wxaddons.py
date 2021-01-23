@@ -92,7 +92,7 @@ def GetAllChildren(self, skip=None):
 	""" Get children of window and its subwindows """
 	if not isinstance(skip, (list, tuple)):
 		skip = [skip]
-	children = filter(lambda child: child not in skip, self.GetChildren())
+	children = [child for child in self.GetChildren() if child not in skip]
 	allchildren = []
 	for child in children:
 		allchildren.append(child)
@@ -179,7 +179,7 @@ def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 			xy = [x, y]
 			for i, pos in enumerate([xy,
 									 (x + self.Size[0], y + self.Size[1])]):
-				for j in xrange(2):
+				for j in range(2):
 					if (pos[j] > display_client_rect[j] +
 								 display_client_rect[2 + j] or
 						pos[j] < display_client_rect[j]):
@@ -464,7 +464,7 @@ class ThreadedTimer(object):
 		if hasattr(wx.Window, "UnreserveControlId") and self.Id < 0:
 			try:
 				wx.Window.UnreserveControlId(self.Id)
-			except wx.wxAssertionError, exception:
+			except wx.wxAssertionError as exception:
 				pass
 
 	def GetId(self):

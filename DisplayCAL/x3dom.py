@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
-import httplib
+
+import http.client
 import os
 import re
 import socket
 import string
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from config import get_data_path
 from defaultpaths import cache as cachepath
@@ -39,7 +39,7 @@ class Tag(object):
 	def markup(self, allow_empty_element_tag=False, x3dom=False):
 		markup = ["<%s" % self.tagname]
 		attrs = []
-		for key, value in self.attributes.iteritems():
+		for key, value in self.attributes.items():
 			value = value.strip().replace("<",
 										  "&lt;").replace(">",
 														  "&gt;").replace("&",
@@ -126,9 +126,9 @@ class Tag(object):
 				for url in (url, url.replace("https://", "http://")):
 					_safe_print("Requesting:", url)
 					try:
-						response = urllib2.urlopen(url)
-					except (socket.error, urllib2.URLError,
-							httplib.HTTPException), exception:
+						response = urllib.request.urlopen(url)
+					except (socket.error, urllib.error.URLError,
+							http.client.HTTPException) as exception:
 						_safe_print(exception)
 					else:
 						body = response.read()
@@ -315,8 +315,8 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 					}
 				}
 			]
-		}""" % dict(locals().items() +
-					{"xaxisx": maxx / 2.0 + offsetx,
+		}""" % dict(list(locals().items()) +
+					list({"xaxisx": maxx / 2.0 + offsetx,
 					 "yaxisy": maxy / 2.0 + offsety,
 					 "xyaxisz": offsetz - maxz / 2.0,
 					 "zlabelx": offsetx - 10,
@@ -329,7 +329,7 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 					 "zerolabel": "0" if zero else "",
 					 "zerox": offsetx - 10,
 					 "zeroy": offsety - 10,
-					 "zeroz": offsetz - maxz / 2.0 - 5}.items())
+					 "zeroz": offsetz - maxz / 2.0 - 5}.items()))
 
 
 def safe_print(*args, **kwargs):
@@ -657,11 +657,11 @@ def vrmlfile2x3dfile(vrmlpath, x3dpath, html=True, embed=False, force=False,
 				htmlfile.write(html)
 	except KeyboardInterrupt:
 		x3d = False
-	except VRMLParseError, exception:
+	except VRMLParseError as exception:
 		return exception
-	except EnvironmentError, exception:
+	except EnvironmentError as exception:
 		return exception
-	except Exception, exception:
+	except Exception as exception:
 		import traceback
 		_safe_print(traceback.format_exc())
 		return exception

@@ -9,7 +9,7 @@ License: wxPython license
 
 """
 
-from __future__ import with_statement
+
 import colorsys
 import os
 import re
@@ -1650,7 +1650,7 @@ class ProfileManager(object):
             try:
                 display_profile = ICCP.get_display_profile(display_no)
             except (ICCP.ICCProfileInvalidError, IOError,
-                    IndexError), exception:
+                    IndexError) as exception:
                 safe_print("Could not get display profile for display %i" %
                            (display_no + 1), "@ %i, %i, %ix%i:" %
                            geometry, exception)
@@ -1671,7 +1671,7 @@ class ProfileManager(object):
                                   ICCP.VideoCardGammaType):
                         values = profile.tags.vcgt.getNormalizedValues()
                         RGB = []
-                        for i in xrange(3):
+                        for i in range(3):
                             RGB.append(int(round(values[-1][i] * 255)))
                         (self._window._colour.r,
                          self._window._colour.g,
@@ -1761,7 +1761,7 @@ class ProfileManager(object):
                 if display_name:
                     display_name = display_name.replace("[PRIMARY]",
                                                         lang.getstr("display.primary"))
-                    self._window.SetTitle(display_name + u" ‒ " +
+                    self._window.SetTitle(display_name + " ‒ " +
                                           lang.getstr("whitepoint.visual_editor"))
         else:
             msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")

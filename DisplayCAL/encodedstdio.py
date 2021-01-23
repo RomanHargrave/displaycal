@@ -24,14 +24,14 @@ def codec_register_alias(alias, name):
 
 def conditional_decode(text, encoding='UTF-8', errors='strict'):
     """ Decode text if not unicode """
-    if not isinstance(text, unicode):
+    if not isinstance(text, str):
         text = text.decode(encoding, errors)
     return text
 
 
 def conditional_encode(text, encoding='UTF-8', errors='strict'):
     """ Encode text if unicode """
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         text = text.encode(encoding, errors)
     return text
 
@@ -52,7 +52,7 @@ def encodestdio(encodings=None, errors=None):
         encodings = {'stdin': None, 'stdout': None, 'stderr': None}
     if not errors:
         errors = {'stdin': 'strict', 'stdout': 'replace', 'stderr': 'replace'}
-    for stream_name in set(encodings.keys() + errors.keys()):
+    for stream_name in set(list(encodings.keys()) + list(errors.keys())):
         stream = getattr(sys, stream_name)
         encoding = encodings.get(stream_name)
         if not encoding:
@@ -111,7 +111,7 @@ class EncodedStream(object):
         else:
             object.__setattr__(self, name, value)
     
-    def next(self):
+    def __next__(self):
         return self.readline()
 
     def read(self, size=-1):
@@ -153,12 +153,12 @@ codec_register_alias('cp65001', 'utf_8')
 codecs.register(lambda alias: _codecs.get(alias))
 
 if __name__ == '__main__':
-    test = u'test \u00e4\u00f6\u00fc\ufffe test'
+    test = 'test \u00e4\u00f6\u00fc\ufffe test'
     try:
-        print test
-    except (LookupError, IOError, UnicodeError), exception:
-        print 'could not print %r:' % test, exception
-    print 'wrapping stdout/stderr via encodestdio()'
+        print(test)
+    except (LookupError, IOError, UnicodeError) as exception:
+        print('could not print %r:' % test, exception)
+    print('wrapping stdout/stderr via encodestdio()')
     encodestdio()
-    print test
-    print 'exiting normally'
+    print(test)
+    print('exiting normally')

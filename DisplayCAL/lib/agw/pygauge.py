@@ -356,12 +356,12 @@ class PyGauge(wx.PyWindow):
         
         if self.GetBarGradient():
             tmp = sorted(zip(self._value,self._barGradient)); tmp.reverse()
-            a,b = zip(*tmp)
+            a,b = list(zip(*tmp))
             self._valueSorted       = list(a)
             self._barGradientSorted = list(b)
         else:
             tmp = sorted(zip(self._value,self._barColour)); tmp.reverse()
-            a,b = zip(*tmp)
+            a,b = list(zip(*tmp))
             self._valueSorted     = list(a)
             self._barColourSorted = list(b)
 

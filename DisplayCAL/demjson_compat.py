@@ -5,7 +5,7 @@ demjson 1.3 compatibilty module
 
 """
 
-from StringIO import StringIO
+from io import StringIO
 import json
 import sys
 
@@ -115,7 +115,7 @@ def decode(txt, strict=False, encoding=None, **kw):
 		txt = io.getvalue()
 		if DEBUG:
 			sys.stdout.write('\n')
-			print 'JSON:', txt
+			print('JSON:', txt)
 
 	return json.loads(txt, encoding=encoding, strict=strict)
 

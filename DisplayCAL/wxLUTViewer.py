@@ -98,7 +98,7 @@ class CoordinateType(list):
 			fp.append(y)
 		interp = colormath.Interp(xp, fp, use_numpy=True)
 		otrc = ICCP.CurveType(profile=self.profile)
-		for i in xrange(len(self)):
+		for i in range(len(self)):
 			otrc.append(interp(i / (len(self) - 1.0) * 255) / 100 * 65535)
 		match = otrc.get_transfer_function(best, slice, outoffset=outoffset)
 		self._transfer_function[(best, slice)] = match
@@ -114,7 +114,7 @@ class CoordinateType(list):
 		
 		"""
 		self[:] = [[y, x] for y, x in values]
-		for i in xrange(len(self)):
+		for i in range(len(self)):
 			self[i][0] = vmin + colormath.specialpow(self[i][1] / 255.0, power) * (vmax - vmin)
 
 
@@ -232,13 +232,13 @@ class LUTCanvas(plot.PlotCanvas):
 		points = {}
 		if not channels:
 			channels = {}
-		for channel, channel_name in channels.iteritems():
+		for channel, channel_name in channels.items():
 			if channel_name:
 				self.point_grid[channel] = {}
 				points[channel] = []
 
 		if not vcgt:
-			irange = range(0, 256)
+			irange = list(range(0, 256))
 		elif "data" in vcgt: # table
 			data = list(vcgt['data'])
 			while len(data) < len(channels):
@@ -246,9 +246,9 @@ class LUTCanvas(plot.PlotCanvas):
 			if (not isinstance(vcgt, ICCP.VideoCardGammaTableType) and
 				not isinstance(data[0], ICCP.CurveType)):
 				# Coordinate list
-				irange = range(0, len(data[0]))
+				irange = list(range(0, len(data[0])))
 				set_linear_points = True
-				for channel in xrange(len(data)):
+				for channel in range(len(data)):
 					if channel in points:
 						for n, y in data[channel]:
 							if not detect_increments and set_linear_points:
@@ -260,13 +260,13 @@ class LUTCanvas(plot.PlotCanvas):
 							self.point_grid[channel][idx] = y
 						set_linear_points = False
 			else:
-				irange = range(0, vcgt['entryCount'])
+				irange = list(range(0, vcgt['entryCount']))
 				maxv = math.pow(256, vcgt['entrySize']) - 1
 				for i in irange:
 					j = i * (axis_y / (vcgt['entryCount'] - 1))
 					if not detect_increments:
 						linear_points.append([j, j])
-					for channel, values in points.iteritems():
+					for channel, values in points.items():
 						n = float(data[channel][i]) / maxv * axis_x
 						if not detect_increments or not values or \
 						   i == vcgt['entryCount'] - 1 or n != i:
@@ -285,7 +285,7 @@ class LUTCanvas(plot.PlotCanvas):
 								idx = int(round(j / 255.0 * 4095))
 								self.point_grid[channel][idx] = n
 		else: # formula
-			irange = range(0, 256)
+			irange = list(range(0, 256))
 			step = 100.0 / axis_y
 			for i in irange:
 				# float2dec(v) fixes miniscule deviations in the calculated gamma
@@ -318,7 +318,7 @@ class LUTCanvas(plot.PlotCanvas):
 		linear = [[0, 0], [irange[-1], irange[-1]]]
 		
 		if not vcgt:
-			for values in points.itervalues():
+			for values in points.values():
 				if detect_increments:
 					values[:] = linear
 				else:
@@ -327,7 +327,7 @@ class LUTCanvas(plot.PlotCanvas):
 		# Note: We need to make sure each point is a float because it
 		# might be a decimal.Decimal, which can't be divided by floats!
 		self.unique = {}
-		for channel, values in points.iteritems():
+		for channel, values in points.items():
 			self.unique[channel] = len(set(round(float(y) / axis_y * irange[-1])
 										   for x, y in values))
 
@@ -335,27 +335,27 @@ class LUTCanvas(plot.PlotCanvas):
 		color = 'white'
 			
 		if len(points) > 1:
-			values0 = points.values()[0]
+			values0 = list(points.values())[0]
 			# identical = all(values == values0
 							# for values in points.itervalues())
 			identical = (all(all(x == values0[i][0] and
 								 abs(y - values0[i][1]) < 0.005
 								 for i, (x, y) in enumerate(values))
-							 for values in points.itervalues()))
+							 for values in points.values()))
 		else:
 			identical = False
 
 		if identical:
-			channels_label = "".join(channels.values())
+			channels_label = "".join(list(channels.values()))
 			color = self.get_color(channels_label, color)
-		for channel_name in channels.values():
+		for channel_name in list(channels.values()):
 			if channel_name:
 				legend.append(channel_name)
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
 		seen_values = []
 		seen_labels = []
-		for channel, values in points.iteritems():
+		for channel, values in points.items():
 			channel_label = channels[channel]
 			if not identical:
 				color = self.colors.get(colorspace + "_" + channel_label,
@@ -860,7 +860,7 @@ class LUTFrame(BaseFrame):
 											"(*.cal)")
 		self.save_vcgt_btn.Disable()
 		
-		self.show_as_L = CustomCheckBox(self.box_panel, -1, u"L* \u2192")
+		self.show_as_L = CustomCheckBox(self.box_panel, -1, "L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetMaxFontSize(11)
 		self.show_as_L.SetValue(True)
@@ -940,7 +940,7 @@ class LUTFrame(BaseFrame):
 		else:
 			try:
 				profile = ICCP.ICCProfile(path)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				InfoDialog(self, msg=lang.getstr("profile.invalid") + 
 									 "\n" + path, 
 						   ok=lang.getstr("ok"), 
@@ -986,9 +986,9 @@ class LUTFrame(BaseFrame):
 			# Make sure to only delete the temporary cal file we created
 			try:
 				os.remove(cal)
-			except Exception, exception:
-				safe_print(u"Warning - temporary file "
-						   u"'%s' could not be removed: %s" % 
+			except Exception as exception:
+				safe_print("Warning - temporary file "
+						   "'%s' could not be removed: %s" % 
 						   tuple(safe_unicode(s) for s in 
 								 (cal, exception)))
 
@@ -1041,7 +1041,7 @@ class LUTFrame(BaseFrame):
 	def toggle_clut_handler(self, event):
 		try:
 			self.lookup_tone_response_curves()
-		except Exception, exception:
+		except Exception as exception:
 			import traceback
 			safe_print(traceback.format_exc())
 			show_result_dialog(exception, self)
@@ -1099,9 +1099,9 @@ class LUTFrame(BaseFrame):
 			# so make sure to only delete the temporary cal file we created
 			try:
 				os.remove(outfilename)
-			except Exception, exception:
-				safe_print(u"Warning - temporary file "
-						   u"'%s' could not be removed: %s" % 
+			except Exception as exception:
+				safe_print("Warning - temporary file "
+						   "'%s' could not be removed: %s" % 
 						   tuple(safe_unicode(s) for s in 
 								 (outfilename, exception)))
 		if profile and (profile.is_loaded or not profile.fileName or 
@@ -1175,12 +1175,12 @@ class LUTFrame(BaseFrame):
 		XYZ_triplets = []
 		Lab_triplets = []
 		devicevalues = []
-		for i in xrange(0, size):
+		for i in range(0, size):
 			if direction in ("b", "if"):
 				if intent == "a":
 					# For display profiles, identical to relcol
 					# For print profiles, makes max L* match paper white
-					XYZwp_ir = profile.tags.wtpt.ir.values()
+					XYZwp_ir = list(profile.tags.wtpt.ir.values())
 					Labwp_ir = profile.tags.wtpt.ir.Lab
 					XYZwp_D50 = colormath.Lab2XYZ(Labwp_ir[0], 0, 0)
 					X, Y, Z = colormath.Lab2XYZ(min(i * (100.0 / (size - 1)), Labwp_ir[0]), 0, 0)
@@ -1225,7 +1225,7 @@ class LUTFrame(BaseFrame):
 									   direction, order, pcs,
 									   use_icclu=use_icclu,
 									   get_clip=direction == "if")
-		except Exception, exception:
+		except Exception as exception:
 			self.client.errors.append(Error(safe_unicode(exception)))
 		
 		if self.client.errors:
@@ -1267,7 +1267,7 @@ class LUTFrame(BaseFrame):
 					# monotonically increasing
 					mono = [[], [], []]
 					for i, values in enumerate(odata):
-						for j in xrange(3):
+						for j in range(3):
 							mono[j].append(values[j])
 					for j, values in enumerate(mono):
 						for i, v in enumerate(values):
@@ -1278,9 +1278,9 @@ class LUTFrame(BaseFrame):
 						if i + 2 < mono_end:
 							mono[j][i:mono_end] = colormath.make_monotonically_increasing(values[i:mono_end])
 					odata = []
-					for i in xrange(len(mono[0])):
+					for i in range(len(mono[0])):
 						values = []
-						for j in xrange(3):
+						for j in range(3):
 							values.append(mono[j][i])
 						odata.append(values)
 
@@ -1316,10 +1316,10 @@ class LUTFrame(BaseFrame):
 					if direction in ("b", "if"):
 						X = Z = Y
 					elif intent == "a":
-						wp = profile.tags.wtpt.ir.values()
+						wp = list(profile.tags.wtpt.ir.values())
 						X, Y, Z = colormath.adapt(X, Y, Z, wp, (1, 1, 1))
 					elif intent != "a":
-						wp = profile.tags.wtpt.ir.values()
+						wp = list(profile.tags.wtpt.ir.values())
 						X, Y, Z = colormath.adapt(X, Y, Z, "D50", (1, 1, 1))
 					if i == 0:
 						self.rTRC.append([X, v])
@@ -1351,7 +1351,7 @@ class LUTFrame(BaseFrame):
 				continue
 			# Second, interpolate to given size and use the same y axis 
 			# for all channels
-			for i in xrange(size):
+			for i in range(size):
 				x.append(i / (size - 1.0) * maxv)
 				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
 			xi = numpy.interp(y, yp, xp)
@@ -1421,7 +1421,7 @@ class LUTFrame(BaseFrame):
 		if profile and not isinstance(profile, ICCP.ICCProfile):
 			try:
 				profile = ICCP.ICCProfile(profile)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 										 "\n" + profile), self)
 				profile = None
@@ -1436,7 +1436,7 @@ class LUTFrame(BaseFrame):
 			self.profile.colorSpace != profile.colorSpace):
 			center = True
 		if profile.getDescription():
-			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
+			title = " \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
 									  profile.getDescription()])
 		else:
 			title = lang.getstr("calibration.lut_viewer.title")
@@ -1461,7 +1461,7 @@ class LUTFrame(BaseFrame):
 			 profile.colorSpace in ("RGB", "GRAY", "CMYK"))):
 			try:
 				self.lookup_tone_response_curves()
-			except Exception, exception:
+			except Exception as exception:
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				curves.append(lang.getstr('[rgb]TRC'))
@@ -1505,7 +1505,7 @@ class LUTFrame(BaseFrame):
 	def add_toggles(self, parent, sizer):
 		# Add toggle checkboxes for up to 16 channels
 		self.toggles = []
-		for i in xrange(16):
+		for i in range(16):
 			toggle = CustomCheckBox(parent, -1, "",
 									name="toggle_channel_%i" % i)
 			toggle.SetForegroundColour(FGCOLOUR)
@@ -1557,7 +1557,7 @@ class LUTFrame(BaseFrame):
 															100.0), 
 														   self.client.unique[2], 
 														   self.client.entryCount)
-				unique = self.client.unique.values()
+				unique = list(self.client.unique.values())
 				if not 0 in unique and not "R=G=B" in colorants:
 					unique = min(unique)
 					legend[-1] += ", %s %.1f%% (%i/%i)" % (lang.getstr("grayscale"), 
@@ -1577,13 +1577,13 @@ class LUTFrame(BaseFrame):
 				len(self.tf_rTRC) == len(self.tf_gTRC) == len(self.tf_bTRC)):
 				if isinstance(self.tf_rTRC, ICCP.CurveType):
 					self.trc = ICCP.CurveType(profile=self.profile)
-					for i in xrange(len(self.tf_rTRC)):
+					for i in range(len(self.tf_rTRC)):
 						self.trc.append((self.tf_rTRC[i] +
 										 self.tf_gTRC[i] +
 										 self.tf_bTRC[i]) / 3.0)
 				else:
 					self.trc = CoordinateType(self.profile)
-					for i in xrange(len(self.tf_rTRC)):
+					for i in range(len(self.tf_rTRC)):
 						self.trc.append([(self.tf_rTRC[i][0] +
 										  self.tf_gTRC[i][0] +
 										  self.tf_bTRC[i][0]) / 3.0,
@@ -1620,9 +1620,9 @@ class LUTFrame(BaseFrame):
 				else:
 					label = lang.getstr("rgb.trc.averaged")
 				if round(transfer_function[1], 2) == 1.0:
-					value = u"%s" % (transfer_function[0][0])
+					value = "%s" % (transfer_function[0][0])
 				else:
-					value = u"≈ %s (Δ %.2f%%)" % (transfer_function[0][0],
+					value = "≈ %s (Δ %.2f%%)" % (transfer_function[0][0],
 												  100 - transfer_function[1] * 100)
 				legend.append(" ".join([label, value]))
 
@@ -1718,7 +1718,7 @@ class LUTFrame(BaseFrame):
 					maxv = 100
 				else:
 					maxv = 255
-				lin = [v / (entry_count - 1.0) * maxv for v in xrange(entry_count)]
+				lin = [v / (entry_count - 1.0) * maxv for v in range(entry_count)]
 				data = []
 				for i, table in enumerate(tables):
 					xp = lin
@@ -2025,8 +2025,8 @@ class LUTFrame(BaseFrame):
 					value.append((toggle.Label, v))
 				identical = len(value) > 1 and all(v[1] == value[0][1] for v in value)
 				if 1:
-					joiner = u" \u2192 "
-					label = filter(None, channels.values())
+					joiner = " \u2192 "
+					label = [_f for _f in list(channels.values()) if _f]
 					if (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 						self.profile.connectionColorSpace != "RGB"):
 						if self.show_as_L.GetValue():
@@ -2057,8 +2057,7 @@ class LUTFrame(BaseFrame):
 							#RGB = "R=G=B %.2f" % value[0][1]
 					else:
 						RGB = " ".join([format[1] % (v, s) for v, s in
-										filter(lambda v: v[1] is not None,
-											   value)])
+										[v for v in value if v[1] is not None]])
 					vin = pointXY[0]
 					if not "L*" in label and ("a*" in label or "b*" in label):
 						vin = -128 + pointXY[0] / 100.0 * (255 + 255 / 256.0)
@@ -2067,7 +2066,7 @@ class LUTFrame(BaseFrame):
 						self.profile.connectionColorSpace != "RGB"):
 						pointXY = pointXY[1], pointXY[0]
 				else:
-					joiner = u" \u2192 "
+					joiner = " \u2192 "
 					format = "%.2f", "%.2f"
 					axis_y = self.client.axis_y[1]
 					legend[0] += " " + joiner.join([format[i] % point
@@ -2093,8 +2092,7 @@ class LUTFrame(BaseFrame):
 							continue
 						if identical:
 							label = "=".join(["%s" % s for s, v in
-											  filter(lambda (s, v): v is not None,
-													 value)])
+											  [s_v for s_v in value if s_v[1] is not None]])
 						# Note: We need to make sure each point is a float because it
 						# might be a decimal.Decimal, which can't be divided by floats!
 						gamma.append(label + " %.2f" % round(math.log(float(y) / axis_y) / math.log(x / axis_x), 2))

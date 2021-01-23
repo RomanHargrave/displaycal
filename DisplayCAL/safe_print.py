@@ -85,13 +85,13 @@ class SafePrinter():
 		encoding = kwargs.get("encoding", self.encoding)
 		strargs = []
 		if encoding:
-			cls = basestring
+			cls = str
 		else:
-			cls = unicode
+			cls = str
 		for arg in args:
 			if not isinstance(arg, cls):
 				arg = safe_unicode(arg)
-			if isinstance(arg, unicode) and encoding:
+			if isinstance(arg, str) and encoding:
 				arg = arg.encode(encoding, "asciize")
 			strargs.append(arg)
 		line = sep.join(strargs).rstrip(end)

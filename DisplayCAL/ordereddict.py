@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from itertools import izip, imap
+
 
 def is_nan(obj):
 	"""
@@ -50,7 +50,7 @@ class OrderedDict(dict):
 		"""
 		if isinstance(other, OrderedDict):
 			return len(self) == len(other) and \
-				   all(p == q for p, q in zip(self.items(), other.items()))
+				   all(p == q for p, q in zip(list(self.items()), list(other.items())))
 		return dict.__eq__(self, other)
 	
 	def __getslice__(self, i, j):
@@ -58,7 +58,7 @@ class OrderedDict(dict):
 		Get a range of keys. Return a new OrderedDict.
 		"""
 		keys = self._keys[i:j]
-		return self.__class__(zip(keys, map(self.get, keys)))
+		return self.__class__(list(zip(keys, list(map(self.get, keys)))))
 	
 	def __iter__(self):
 		return iter(self._keys)
@@ -83,7 +83,7 @@ class OrderedDict(dict):
 		"""
 		if not self:
 			return "%s.%s()" % (self.__class__.__module__, self.__class__.__name__)
-		return "%s.%s(%r)" % (self.__class__.__module__, self.__class__.__name__, self.items())
+		return "%s.%s(%r)" % (self.__class__.__module__, self.__class__.__name__, list(self.items()))
 	
 	def __reversed__(self):
 		"""
@@ -102,7 +102,7 @@ class OrderedDict(dict):
 		"""
 		for key in iter(self._keys[i:j]):
 			dict.__delitem__(self, key)
-		self._keys[i:j] = self.__class__(iterable).keys()
+		self._keys[i:j] = list(self.__class__(iterable).keys())
 		self.update(iterable)
 	
 	def clear(self):
@@ -178,15 +178,15 @@ class OrderedDict(dict):
 		dict.__setitem__(self, key, value)
 	
 	def items(self):
-		return zip(self._keys, self.values())
+		return list(zip(self._keys, list(self.values())))
 	
 	def iteritems(self):
-		return izip(self._keys, self.itervalues())
+		return zip(self._keys, iter(self.values()))
 	
 	iterkeys = __iter__
 	
 	def itervalues(self):
-		return imap(self.get, self._keys)
+		return map(self.get, self._keys)
 	
 	def key(self, value, start=0, stop=missing):
 		"""
@@ -200,7 +200,7 @@ class OrderedDict(dict):
 				iterable = self[start:]
 		else:
 			iterable = self
-		for item in iterable.iteritems():
+		for item in iterable.items():
 			if item[1] == value:
 				return item[0]
 		raise ValueError(value)
@@ -269,18 +269,18 @@ class OrderedDict(dict):
 			raise TypeError("update expected at most 1 arguments, got %i" % len(args))
 		for iterable in args:
 			if hasattr(iterable, "iteritems"):
-				self.update(iterable.iteritems())
+				self.update(iter(iterable.items()))
 			elif hasattr(iterable, "keys"):
-				for key in iterable.keys():
+				for key in list(iterable.keys()):
 					self[key] = iterable[key]
 			else:
 				for key, value in iterable:
 					self[key] = value
 		if kwargs:
-			self.update(kwargs.iteritems())
+			self.update(iter(kwargs.items()))
 	
 	def values(self):
-		return map(self.get, self._keys)
+		return list(map(self.get, self._keys))
 	
 	__init__.__doc__ = dict.__init__.__doc__
 	__delitem__.__doc__ = dict.__delitem__.__doc__

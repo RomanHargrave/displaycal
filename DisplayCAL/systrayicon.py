@@ -34,10 +34,10 @@ class Menu(wx.EvtHandler):
 		# functionality
 		self._destroyed = False
 
-	def Append(self, id, text, help=u"", kind=wx.ITEM_NORMAL):
+	def Append(self, id, text, help="", kind=wx.ITEM_NORMAL):
 		return self.AppendItem(MenuItem(self, id, text, help, kind))
 
-	def AppendCheckItem(self, id, text, help=u""):
+	def AppendCheckItem(self, id, text, help=""):
 		return self.Append(id, text, help, wx.ITEM_CHECK)
 
 	def AppendItem(self, item):
@@ -52,23 +52,23 @@ class Menu(wx.EvtHandler):
 				flags |= win32con.MF_DISABLED
 		# Use ctypes instead of win32gui.AppendMenu for unicode support
 		ctypes.windll.User32.AppendMenuW(self.hmenu, flags, item.Id,
-										 unicode(item.ItemLabel))
+										 str(item.ItemLabel))
 		self.MenuItems.append(item)
 		self._menuitems[item.Id] = item
 		if item.Checked:
 			self.Check(item.Id)
 		return item
 
-	def AppendSubMenu(self, submenu, text, help=u""):
+	def AppendSubMenu(self, submenu, text, help=""):
 		item = MenuItem(self, submenu.hmenu, text, help, wx.ITEM_NORMAL,
 						submenu)
 		return self.AppendItem(item)
 
-	def AppendRadioItem(self, id, text, help=u""):
+	def AppendRadioItem(self, id, text, help=""):
 		return self.Append(id, text, help, wx.ITEM_RADIO)
 
 	def AppendSeparator(self):
-		return self.Append(-1, u"", kind=wx.ITEM_SEPARATOR)
+		return self.Append(-1, "", kind=wx.ITEM_SEPARATOR)
 
 	def Check(self, id, check=True):
 		flags = win32con.MF_BYCOMMAND
@@ -116,7 +116,7 @@ class Menu(wx.EvtHandler):
 		self._destroyed = True
 		wx.EvtHandler.Destroy(self)
 
-	def __nonzero__(self):
+	def __bool__(self):
 		return not self._destroyed
 
 	def Enable(self, id, enable=True):
@@ -130,7 +130,7 @@ class Menu(wx.EvtHandler):
 
 class MenuItem(object):
 
-	def __init__(self, menu, id=-1, text=u"", help=u"", kind=wx.ITEM_NORMAL,
+	def __init__(self, menu, id=-1, text="", help="", kind=wx.ITEM_NORMAL,
 				 subMenu=None):
 		if id == -1:
 			id = IdFactory.NewId()
@@ -277,7 +277,7 @@ class SysTrayIcon(wx.EvtHandler):
 		self._destroyed = True
 		wx.EvtHandler.Destroy(self)
 
-	def __nonzero__(self):
+	def __bool__(self):
 		return not self._destroyed
 
 	def OnRightUp(self, event):
@@ -333,7 +333,7 @@ class SysTrayIcon(wx.EvtHandler):
 			return True
 		return False
 
-	def SetIcon(self, hicon, tooltip=u""):
+	def SetIcon(self, hicon, tooltip=""):
 		if isinstance(hicon, wx.Icon):
 			hicon = hicon.GetHandle()
 		flags = win32gui.NIF_ICON | win32gui.NIF_MESSAGE | win32gui.NIF_TIP
@@ -381,8 +381,8 @@ def main():
 	icon = SysTrayIcon()
 	icon.Bind(wx.EVT_TASKBAR_LEFT_UP,
 			  lambda event: wx.MessageDialog(None,
-											 u"Native system tray icon demo (Windows only)",
-											 u"SysTrayIcon class",
+											 "Native system tray icon demo (Windows only)",
+											 "SysTrayIcon class",
 											 wx.OK | wx.ICON_INFORMATION).ShowModal())
 	icon.SetIcon(hicon, tooltip)
 	win32gui.PumpMessages()

@@ -20,7 +20,7 @@ if sys.platform == "win32":
 			pass
 	else:
 		# Use registry as fallback for Win2k/XP/2003
-		import _winreg
+		import winreg
 	import pywintypes
 	import win32api
 elif sys.platform == "darwin":
@@ -37,7 +37,7 @@ if sys.platform == "win32":
 elif sys.platform != "darwin":
 	try:
 		import RealDisplaySizeMM as RDSMM
-	except ImportError, exception:
+	except ImportError as exception:
 		warnings.warn(safe_str(exception, enc), Warning)
 		RDSMM = None
 
@@ -111,7 +111,7 @@ def get_edid(display_no=0, display_name=None, device=None):
 			# http://msdn.microsoft.com/en-us/library/Aa392707
 			try:
 				msmonitors = wmi_connection.WmiMonitorDescriptorMethods()
-			except Exception, exception:
+			except Exception as exception:
 				if not_main_thread:
 					pythoncom.CoUninitialize()
 				raise WMIError(safe_str(exception))
@@ -139,27 +139,27 @@ def get_edid(display_no=0, display_name=None, device=None):
 			subkey = "\\".join(["SYSTEM", "CurrentControlSet", "Enum", 
 								"DISPLAY", id])
 			try:
-				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey)
+				key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey)
 			except WindowsError:
 				# Registry error
 				safe_print("Windows registry error: Key", 
 						   "\\".join(["HKEY_LOCAL_MACHINE", subkey]), 
 						   "does not exist.")
 				return {}
-			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+			numsubkeys, numvalues, mtime = winreg.QueryInfoKey(key)
 			for i in range(numsubkeys):
-				hkname = _winreg.EnumKey(key, i)
-				hk = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+				hkname = winreg.EnumKey(key, i)
+				hk = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
 									 "\\".join([subkey, hkname]))
 				try:
-					test = _winreg.QueryValueEx(hk, "Driver")[0]
+					test = winreg.QueryValueEx(hk, "Driver")[0]
 				except WindowsError:
 					# No Driver entry
 					continue
 				if test == driver:
 					# Found our display device
 					try:
-						devparms = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+						devparms = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
 										 "\\".join([subkey, hkname, 
 													"Device Parameters"]))
 					except WindowsError:
@@ -170,7 +170,7 @@ def get_edid(display_no=0, display_name=None, device=None):
 								   "does not exist.")
 						continue
 					try:
-						edid = _winreg.QueryValueEx(devparms, "EDID")[0]
+						edid = winreg.QueryValueEx(devparms, "EDID")[0]
 					except WindowsError:
 						# No EDID entry
 						pass
@@ -265,7 +265,7 @@ def get_manufacturer_name(manufacturer_id):
 									# Strip leading/trailing whitespace
 									# (non-breaking spaces too)
 									id, name = line.strip(string.whitespace + 
-														  u"\u00a0").split(None,
+														  "\u00a0").split(None,
 																		   1)
 								except ValueError:
 									continue
@@ -290,7 +290,7 @@ def edid_get_bits(value, begin, end):
 def edid_decode_fraction(high, low):
 	result = 0.0
 	high = (high << 2) | low
-	for i in xrange(0, 10):
+	for i in range(0, 10):
 		result += edid_get_bit(high, i) * math.pow(2, i - 10)
 	return result
 

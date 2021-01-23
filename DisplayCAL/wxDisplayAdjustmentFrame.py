@@ -123,7 +123,7 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 			if self._pinBtnRect.Contains(pt):
 				return -1, IMG_OVER_PIN
 
-		for i in xrange(len(self._pagesInfoVec)):
+		for i in range(len(self._pagesInfoVec)):
 		
 			if self._pagesInfoVec[i].GetPosition() == wx.Point(-1, -1):
 				break
@@ -207,7 +207,7 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 
 		count = 0
 		
-		for i in xrange(len(self._pagesInfoVec)):
+		for i in range(len(self._pagesInfoVec)):
 			if self.GetParent().GetParent().is_busy and i != self.GetParent().GetSelection():
 				continue
 			if i in self.GetParent().disabled_pages:
@@ -586,7 +586,7 @@ class DisplayAdjustmentPanel(wx_Panel):
 				   len(current): current,
 				   len(target): target}
 		longest = strings[max(strings.keys())]
-		label = longest + u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00\nX"
+		label = longest + " x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00\nX"
 		checkmark.GetContainingSizer().Hide(checkmark)
 		self.sizer.Add(txtsizer, flag=wx.TOP | wx.BOTTOM |
 									  wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
@@ -753,15 +753,15 @@ class DisplayAdjustmentFrame(windowcls):
 			# Use an accelerator table for tab, space, 0-9, A-Z, numpad,
 			# navigation keys and processing keys
 			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
-			keycodes.extend(range(ord("0"), ord("9")))
-			keycodes.extend(range(ord("A"), ord("Z")))
+			keycodes.extend(list(range(ord("0"), ord("9"))))
+			keycodes.extend(list(range(ord("A"), ord("Z"))))
 			keycodes.extend(numpad_keycodes)
 			keycodes.extend(nav_keycodes)
 			keycodes.extend(processing_keycodes)
 			for keycode in keycodes:
 				self.id_to_keycode[wx.Window.NewControlId()] = keycode
 			accels = []
-			for id, keycode in self.id_to_keycode.iteritems():
+			for id, keycode in self.id_to_keycode.items():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
 				accels.append((wx.ACCEL_NORMAL, keycode, id))
 				if keycode == wx.WXK_TAB:
@@ -815,11 +815,11 @@ class DisplayAdjustmentFrame(windowcls):
 		self.stop_timer()
 		del self.timer
 		if hasattr(wx.Window, "UnreserveControlId"):
-			for id in self.id_to_keycode.iterkeys():
+			for id in self.id_to_keycode.keys():
 				if id < 0:
 					try:
 						wx.Window.UnreserveControlId(id)
-					except wx.wxAssertionError, exception:
+					except wx.wxAssertionError as exception:
 						safe_print(exception)
 		
 	def OnMove(self, event):
@@ -852,10 +852,10 @@ class DisplayAdjustmentFrame(windowcls):
 				msg != self.lastmsg):
 				self.lastmsg = msg
 				self.Freeze()
-				for txt in self.lb.GetCurrentPage().txt.itervalues():
+				for txt in self.lb.GetCurrentPage().txt.values():
 					txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
 					txt.SetLabel(" ")
-				txt = self.lb.GetCurrentPage().txt.values()[0]
+				txt = list(self.lb.GetCurrentPage().txt.values())[0]
 				if txt.GetLabel() != wrap(msg, 46):
 					txt.SetLabel(wrap(msg, 46))
 					txt.SetForegroundColour(FGCOLOUR)
@@ -922,7 +922,7 @@ class DisplayAdjustmentFrame(windowcls):
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale < 1:
 			scale = 1
-		img_w, img_h = map(int, map(round, (84 * scale, 72 * scale)))
+		img_w, img_h = list(map(int, list(map(round, (84 * scale, 72 * scale)))))
 		min_h = (img_h + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
 		if init:
 			self.lb.SetMinSize((418, min_h))
@@ -938,7 +938,7 @@ class DisplayAdjustmentFrame(windowcls):
 		# The button sizer will be as wide as the labelbook or wider,
 		# so use it as reference
 		w = self.btnsizer.CalcMin()[0] - img_w - 12
-		for pagenum in xrange(0, self.lb.GetPageCount()):
+		for pagenum in range(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
 			page.SetSize((w, -1))
 			page.desc.SetLabel(page.desc.GetLabel().replace("\n", " "))
@@ -966,7 +966,7 @@ class DisplayAdjustmentFrame(windowcls):
 														   bitmap))
 			page.Fit()
 			page.Layout()
-			for txt in page.txt.itervalues():
+			for txt in page.txt.values():
 				txt.SetLabel(" ")
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
 							max(self.lb.GetCurrentPage().GetSize()[1], min_h)))
@@ -1065,8 +1065,8 @@ class DisplayAdjustmentFrame(windowcls):
 					event.Skip()
 			elif keycode in [ord(str(c)) for c in range(1, 6)]:
 				key_num = chr(keycode)
-				pagenum = dict(zip(self.pagenum_2_argyll_key_num.values(),
-								   self.pagenum_2_argyll_key_num.keys())).get(key_num)
+				pagenum = dict(list(zip(list(self.pagenum_2_argyll_key_num.values()),
+								   list(self.pagenum_2_argyll_key_num.keys())))).get(key_num)
 				if pagenum not in self.lb.disabled_pages and not self.is_measuring:
 					self.lb.SetSelection(pagenum)
 					self.start_interactive_adjustment()
@@ -1180,15 +1180,15 @@ class DisplayAdjustmentFrame(windowcls):
 					elif round(l_diff, 2) < 0:
 						sign = "-"
 					else:
-						sign = u"\u00B1"  # plusminus
-					label = u"%s %.2f cd/m\u00b2\n%s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr(lstr),
+						sign = "\u00B1"  # plusminus
+					label = "%s %.2f cd/m\u00b2\n%s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr(lstr),
 																					compare_br[1],
 																					lang.getstr("current"),
 																					float(current_br.groups()[0]),
 																					sign,
 																					abs(l_diff) * percent)
 				else:
-					label = lang.getstr("current") + u" %.2f cd/m\u00b2" % float(current_br.groups()[0])
+					label = lang.getstr("current") + " %.2f cd/m\u00b2" % float(current_br.groups()[0])
 				self.lb.GetCurrentPage().txt["luminance"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["luminance"].checkmark,
 																							  lstr == "target" and abs(l_diff) * percent <= 1)
 				self.lb.GetCurrentPage().txt["luminance"].SetForegroundColour(colors[lstr == "target" and abs(l_diff) * percent <= 1])
@@ -1206,8 +1206,8 @@ class DisplayAdjustmentFrame(windowcls):
 				elif round(l_diff, 2) < 0:
 					sign = "-"
 				else:
-					sign = u"\u00B1"  # plusminus
-				label = u"%s %.2f cd/m\u00b2\n%s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr("target"),
+					sign = "\u00B1"  # plusminus
+				label = "%s %.2f cd/m\u00b2\n%s %.2f cd/m\u00b2 (%s%.2f%%)" % (lang.getstr("target"),
 																				target_bl[1],
 																				lang.getstr("current"),
 																				current_bl,
@@ -1218,7 +1218,7 @@ class DisplayAdjustmentFrame(windowcls):
 					l_diff = 0
 				else:
 					l_diff = None
-				label = lang.getstr("current") + u" %.2f cd/m\u00b2" % current_bl
+				label = lang.getstr("current") + " %.2f cd/m\u00b2" % current_bl
 			self.lb.GetCurrentPage().txt["black_level"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["black_level"].checkmark,
 																							l_diff is not None and abs(l_diff) * percent <= 1)
 			self.lb.GetCurrentPage().txt["black_level"].SetForegroundColour(colors[l_diff is not None and abs(l_diff) * percent <= 1])
@@ -1251,12 +1251,12 @@ class DisplayAdjustmentFrame(windowcls):
 				self.lb.GetCurrentPage().txt["rgb"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["rgb"].checkmark,
 																						abs(dE) <= 1)
 				self.lb.GetCurrentPage().txt["rgb"].SetForegroundColour(colors[abs(dE) <= 1])
-				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
+				label = (lang.getstr("current") + " x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				initial_br = getattr(self.lb.GetCurrentPage(), "initial_br", None)
 				if initial_br and len(initial_br) > 3:
 					x, y, vdt, dE = get_xy_vt_dE(initial_br[2:])
-					label = (lang.getstr(initial_br[0].lower()) + u" x %.4f y %.4f %s %.1f \u0394E*00\n" %
+					label = (lang.getstr(initial_br[0].lower()) + " x %.4f y %.4f %s %.1f \u0394E*00\n" %
 							 (x, y, vdt, dE)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["rgb"], label)
 		if white_xy_dE:
@@ -1265,11 +1265,11 @@ class DisplayAdjustmentFrame(windowcls):
 				self.lb.GetCurrentPage().txt["white_point"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["white_point"].checkmark,
 																								abs(dE) <= 1)
 				self.lb.GetCurrentPage().txt["white_point"].SetForegroundColour(colors[abs(dE) <= 1])
-				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
+				label = (lang.getstr("current") + " x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				if white_xy_target:
 					x, y, vdt, dE = get_xy_vt_dE(white_xy_target.groups())
-					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
+					label = (lang.getstr("target") + " x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["white_point"], label)
 		if black_xy_dE:
@@ -1278,11 +1278,11 @@ class DisplayAdjustmentFrame(windowcls):
 				self.lb.GetCurrentPage().txt["black_point"].checkmark.GetContainingSizer().Show(self.lb.GetCurrentPage().txt["black_point"].checkmark,
 																								abs(dE) <= 1)
 				self.lb.GetCurrentPage().txt["black_point"].SetForegroundColour(colors[abs(dE) <= 1])
-				label = (lang.getstr("current") + u" x %.4f y %.4f %s %.1f \u0394E*00" %
+				label = (lang.getstr("current") + " x %.4f y %.4f %s %.1f \u0394E*00" %
 						 (x, y, vdt, dE)).replace("  ", " ")
 				if black_xy_target:
 					x, y, vdt, dE = get_xy_vt_dE(black_xy_target.groups())
-					label = (lang.getstr("target") + u" x %.4f y %.4f\n" %
+					label = (lang.getstr("target") + " x %.4f y %.4f\n" %
 							 (x, y)).replace("  ", " ") + label
 				set_label_and_size(self.lb.GetCurrentPage().txt["black_point"], label)
 		if ((current_br or current_bl or xy_dE_rgb) and
@@ -1325,7 +1325,7 @@ class DisplayAdjustmentFrame(windowcls):
 		self.Freeze()
 		self._setup()
 		# Reset controls
-		for pagenum in xrange(0, self.lb.GetPageCount()):
+		for pagenum in range(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
 			page.initial_br = None
 			page.target_bl = None
@@ -1333,7 +1333,7 @@ class DisplayAdjustmentFrame(windowcls):
 				if page.gauges.get(name):
 					page.gauges[name].SetValue(0)
 					page.gauges[name].Refresh()
-			for txt in page.txt.itervalues():
+			for txt in page.txt.values():
 				txt.checkmark.GetContainingSizer().Hide(txt.checkmark)
 				txt.SetForegroundColour(FGCOLOUR)
 		self.create_start_interactive_adjustment_button()
@@ -1357,7 +1357,7 @@ class DisplayAdjustmentFrame(windowcls):
 
 
 if __name__ == "__main__":
-	from thread import start_new_thread
+	from _thread import start_new_thread
 	from time import sleep
 	class Subprocess():
 		def send(self, bytes):
@@ -1686,6 +1686,6 @@ Display adjustment menu:""" + menu
 		for line in txt.split("\n"):
 			sleep(.0625)
 			wx.CallAfter(app.TopWindow.write, line)
-			print line
+			print(line)
 	start_new_thread(test, tuple())
 	app.MainLoop()

@@ -37,13 +37,13 @@ longdesc = ("Calibrate and characterize your display devices using "
 					  "LUTs, as well as optional CIECAM02 gamut mapping to "
 					  "take into account varying viewing conditions.")
 domain = "displaycal.net"
-author_email = "florian" + chr(0100) + domain
+author_email = "florian" + chr(0o100) + domain
 name = "DisplayCAL"
 appstream_id = ".".join(reversed([name] + domain.lower().split(".")))
 name_html = '<span class="appname">Display<span>CAL</span></span>'
 
-py_maxversion = (2, 7)
-py_minversion = (2, 6)
+py_maxversion = (3, 8)
+py_minversion = (3, 8)
 
 version = VERSION_STRING
 version_lin = VERSION_STRING # Linux

@@ -129,7 +129,7 @@ if __name__ == "__main__":
 	config.initcfg()
 	lang.init()
 
-	pg = ChromeCastPatternGenerator(u"Smörebröd")
+	pg = ChromeCastPatternGenerator("Smörebröd")
 
 	# Find our ChromeCast and connect to it, then launch the pattern generator
 	# app on the ChromeCast device

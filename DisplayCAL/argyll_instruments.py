@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from itertools import izip
+
 import re
 
 from util_str import strtr
@@ -587,8 +587,8 @@ def get_canonical_instrument_name(instrument_name, replacements=None,
 								  inverse=False):
 	replacements = replacements or {}
 	if inverse:
-		replacements = dict(izip(replacements.itervalues(),
-								 replacements.iterkeys()))
+		replacements = dict(zip(iter(replacements.values()),
+								 iter(replacements.keys())))
 	return strtr(remove_vendor_names(instrument_name), replacements)
 
 def remove_vendor_names(txt):

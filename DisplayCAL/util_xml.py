@@ -20,14 +20,14 @@ def dict2xml(d, elementname="element", pretty=True, allow_attributes=True,
 		start_tag.append(indent + "<" + elementname)
 
 		if isinstance(d, dict):
-			for key, value in d.iteritems():
+			for key, value in d.items():
 				if isinstance(value, (dict, list)) or not allow_attributes:
 					children.append(dict2xml(value, key, pretty,
 											 allow_attributes, level + 1))
 				else:
 					if pretty:
 						attributes.append("\n" + indent)
-					attributes.append(' %s="%s"' % (key, escape(unicode(value))))
+					attributes.append(' %s="%s"' % (key, escape(str(value))))
 		else:
 			for value in d:
 				children.append(dict2xml(value, "item", pretty,
@@ -43,7 +43,7 @@ def dict2xml(d, elementname="element", pretty=True, allow_attributes=True,
 
 			xml.append("%s</%s>" % (indent, elementname))
 	else:
-		xml.append("%s<%s>%s</%s>" % (indent, elementname, escape(unicode(d)),
+		xml.append("%s<%s>%s</%s>" % (indent, elementname, escape(str(d)),
 									  elementname))
 
 	return (pretty and "\n" or "").join(xml)
@@ -60,7 +60,7 @@ class OrderedDictSimpleRepr(OrderedDict):
 		od.__repr__() <==> repr(od)
 		"""
 		l = []
-		for k, v in self.iteritems():
+		for k, v in self.items():
 			l.append("%r: %r" % (k, v))
 		return "{%s}" % ", ".join(l)
 
@@ -76,7 +76,7 @@ class ETreeDict(OrderedDictSimpleRepr):
 		if etree.attrib or etree.text or children:
 			self[etree.tag] = OrderedDictSimpleRepr(('@' + k, v)
 													for k, v in
-													etree.attrib.iteritems())
+													etree.attrib.items())
 			if etree.text:
 				text = etree.text.strip()
 				if etree.attrib or children:
@@ -87,7 +87,7 @@ class ETreeDict(OrderedDictSimpleRepr):
 			if children:
 				d = self[etree.tag]
 				for child in etree:
-					for k, v in ETreeDict(child).iteritems():
+					for k, v in ETreeDict(child).items():
 						if k in d:
 							if not isinstance(d[k], list):
 								d[k] = [d[k]]

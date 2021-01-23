@@ -284,14 +284,14 @@ class ReportFrame(BaseFrame):
 			cgats = CGATS.CGATS(chart)
 		except (IOError, CGATS.CGATSInvalidError, 
 				CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-				CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+				CGATS.CGATSTypeError, CGATS.CGATSValueError) as exception:
 			show_result_dialog(exception, self)
 		else:
 			data_format = cgats.queryv1("DATA_FORMAT")
 			accurate = cgats.queryv1("ACCURATE_EXPECTED_VALUES") == "true"
 			if data_format:
 				basename, ext = os.path.splitext(chart)
-				for column in data_format.itervalues():
+				for column in data_format.values():
 					column_prefix = column.split("_")[0]
 					if (column_prefix in ("CMYK", "LAB", "RGB", "XYZ") and
 						column_prefix not in values and
@@ -440,7 +440,7 @@ class ReportFrame(BaseFrame):
 						show_result_dialog(Error(lang.getstr("profile.invalid") +
 												 "\n" + path),
 										   parent=self)
-				except IOError, exception:
+				except IOError as exception:
 					if not silent:
 						show_result_dialog(exception, parent=self)
 			if profile:
@@ -466,7 +466,7 @@ class ReportFrame(BaseFrame):
 							try:
 								odata = self.worker.xicclu(profile, (0, 0, 0),
 														   pcs="x")
-							except Exception, exception:
+							except Exception as exception:
 								show_result_dialog(exception, self)
 								self.set_profile_ctrl_path(which)
 								return
@@ -483,7 +483,7 @@ class ReportFrame(BaseFrame):
 							try:
 								odata = self.worker.xicclu(profile, (0, 0, 0),
 														   pcs="x")
-							except Exception, exception:
+							except Exception as exception:
 								show_result_dialog(exception, self)
 								self.set_profile_ctrl_path(which)
 								return
@@ -549,7 +549,7 @@ class ReportFrame(BaseFrame):
 						  dialogTitle=lang.getstr(msg), 
 						  fileMask=wildcard)
 			ctrl = getattr(self, "%s_ctrl" % which)
-			for name, value in kwargs.iteritems():
+			for name, value in kwargs.items():
 				setattr(ctrl, name, value)
 
 		items = []

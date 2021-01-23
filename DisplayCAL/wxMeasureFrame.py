@@ -25,7 +25,7 @@ from wxwindows import (BaseApp, BitmapBackgroundPanel, ConfirmDialog, InfoDialog
 from wxfixes import GenBitmapButton as BitmapButton
 try:
 	import RealDisplaySizeMM as RDSMM
-except ImportError, exception:
+except ImportError as exception:
 	RDSMM = None
 	warnings.warn(safe_str(exception, enc), Warning)
 
@@ -42,15 +42,15 @@ def get_default_size():
 	"""
 	display_sizes = []
 	display_sizes_mm = []
-	for display_no in xrange(len(getcfg("displays"))):
+	for display_no in range(len(getcfg("displays"))):
 		display_no = get_display_number(display_no)
 		display_size = wx.Display(display_no).Geometry[2:]
 		display_size_mm = []
 		if RDSMM:
 			try:
 				display_size_mm = RDSMM.RealDisplaySizeMM(display_no)
-			except Exception, exception:
-				handle_error(u"Error - RealDisplaySizeMM() failed: " + 
+			except Exception as exception:
+				handle_error("Error - RealDisplaySizeMM() failed: " + 
 							 safe_unicode(exception), silent=True)
 			else:
 				display_size_mm = floatlist(display_size_mm)
@@ -602,7 +602,7 @@ class MeasureFrame(InvincibleFrame):
 			buflen = len(buf)
 			# Intervals in pixels per each R, G and B
 			intervals = tuple((buflen / (buflen * (rgb[i] - floor[i]))
-							  if rgb[i] - floor[i] else 0) for i in xrange(3))
+							  if rgb[i] - floor[i] else 0) for i in range(3))
 			safe_print("Intervals %.6f %.6f %.6f" % intervals)
 			floorbytes = tuple(chr(v) for v in floor)
 			ceilbytes = tuple(chr(v) for v in ceil)
@@ -703,7 +703,7 @@ def test():
 				(51.2 / 255, 153.7 / 255, 127.4 / 255)]:
 		wx.CallAfter(wx.GetApp().TopWindow.show_rgb, rgb)
 		time.sleep(0.05)
-		raw_input("Press RETURN to continue\n")
+		input("Press RETURN to continue\n")
 		if not wx.GetApp().TopWindow:
 			break
 

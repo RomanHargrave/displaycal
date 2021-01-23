@@ -81,7 +81,7 @@ if sys.platform != 'win32':
     import resource
     import fcntl
 else:
-    from StringIO import StringIO
+    from io import StringIO
     from ctypes import windll
     import pywintypes
     from win32com.shell.shellcon import CSIDL_APPDATA
@@ -232,8 +232,8 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     else:
         child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile, cwd=cwd, env=env)
     if events is not None:
-        patterns = events.keys()
-        responses = events.values()
+        patterns = list(events.keys())
+        responses = list(events.values())
     else:
         patterns=None # We assume that EOF or TIMEOUT will save us.
         responses=None
@@ -242,26 +242,26 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     while 1:
         try:
             index = child.expect (patterns)
-            if type(child.after) in types.StringTypes:
+            if type(child.after) in (str,):
                 child_result_list.append(child.before + child.after)
             else: # child.after may have been a TIMEOUT or EOF, so don't cat those.
                 child_result_list.append(child.before)
-            if type(responses[index]) in types.StringTypes:
+            if type(responses[index]) in (str,):
                 child.send(responses[index])
             elif type(responses[index]) is types.FunctionType:
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
-                if type(callback_result) in types.StringTypes:
+                if type(callback_result) in (str,):
                     child.send(callback_result)
                 elif callback_result:
                     break
             else:
                 raise TypeError ('The callback must be a string or function type.')
             event_count = event_count + 1
-        except TIMEOUT, e:
+        except TIMEOUT as e:
             child_result_list.append(child.before)
             break
-        except EOF, e:
+        except EOF as e:
             child_result_list.append(child.before)
             break
     child_result = ''.join(child_result_list)
@@ -442,7 +442,7 @@ class spawn_unix (object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
-        self.ocwd = os.getcwdu()
+        self.ocwd = os.getcwd()
         self.cwd = cwd
         self.env = env
         self.__irix_hack = (sys.platform.lower().find('irix')>=0) # This flags if we are running on irix
@@ -558,7 +558,7 @@ class spawn_unix (object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError, e:
+            except OSError as e:
                 raise ExceptionPexpect('Error! pty.fork() failed: ' + str(e))
         else: # Use internal __fork_pty
             self.pid, self.child_fd = self.__fork_pty()
@@ -619,11 +619,11 @@ class spawn_unix (object):
 
         parent_fd, child_fd = os.openpty()
         if parent_fd < 0 or child_fd < 0:
-            raise ExceptionPexpect, "Error! Could not open pty with os.openpty()."
+            raise ExceptionPexpect("Error! Could not open pty with os.openpty().")
 
         pid = os.fork()
         if pid < 0:
-            raise ExceptionPexpect, "Error! Failed os.fork()."
+            raise ExceptionPexpect("Error! Failed os.fork().")
         elif pid == 0:
             # Child.
             os.close(parent_fd)
@@ -661,7 +661,7 @@ class spawn_unix (object):
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
             if fd >= 0:
                 os.close(fd)
-                raise ExceptionPexpect, "Error! We are not disconnected from a controlling tty."
+                raise ExceptionPexpect("Error! We are not disconnected from a controlling tty.")
         except:
             # Good! We are disconnected from a controlling tty.
             pass
@@ -669,14 +669,14 @@ class spawn_unix (object):
         # Verify we can open child pty.
         fd = os.open(child_name, os.O_RDWR);
         if fd < 0:
-            raise ExceptionPexpect, "Error! Could not open child pty, " + child_name
+            raise ExceptionPexpect("Error! Could not open child pty, " + child_name)
         else:
             os.close(fd)
 
         # Verify we now have a controlling tty.
         fd = os.open("/dev/tty", os.O_WRONLY)
         if fd < 0:
-            raise ExceptionPexpect, "Error! Could not open controlling tty, /dev/tty"
+            raise ExceptionPexpect("Error! Could not open controlling tty, /dev/tty")
         else:
             os.close(fd)
 
@@ -864,7 +864,7 @@ class spawn_unix (object):
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
-            except OSError, e: # Linux does this
+            except OSError as e: # Linux does this
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '': # BSD style
@@ -935,7 +935,7 @@ class spawn_unix (object):
 
         return self
 
-    def next (self):    # File-like object.
+    def __next__ (self):    # File-like object.
 
         """This is to support iterators over a file-like object.
         """
@@ -1109,7 +1109,7 @@ class spawn_unix (object):
                 else:
                     return False
             return False
-        except OSError, e:
+        except OSError as e:
             # I think there are kernel timing issues that sometimes cause
             # this to happen. I think isalive() reports True, but the
             # process is dead to the kernel.
@@ -1168,7 +1168,7 @@ class spawn_unix (object):
 
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError, e: # No child processes
+        except OSError as e: # No child processes
             if e[0] == errno.ECHILD:
                 raise ExceptionPexpect ('isalive() encountered condition where "terminated" is 0, but there was no child process. Did someone else call waitpid() on our process?')
             else:
@@ -1180,7 +1180,7 @@ class spawn_unix (object):
         if pid == 0:
             try:
                 pid, status = os.waitpid(self.pid, waitpid_options) ### os.WNOHANG) # Solaris!
-            except OSError, e: # This should never happen...
+            except OSError as e: # This should never happen...
                 if e[0] == errno.ECHILD:
                     raise ExceptionPexpect ('isalive() encountered condition that should never happen. There was no child process. Did someone else call waitpid() on our process?')
                 else:
@@ -1247,7 +1247,7 @@ class spawn_unix (object):
 
         if patterns is None:
             return []
-        if type(patterns) is not types.ListType:
+        if type(patterns) is not list:
             patterns = [patterns]
 
         compile_flags = re.DOTALL # Allow dot to match \n
@@ -1255,7 +1255,7 @@ class spawn_unix (object):
             compile_flags = compile_flags | re.IGNORECASE
         compiled_pattern_list = []
         for p in patterns:
-            if type(p) in types.StringTypes:
+            if type(p) in (str,):
                 compiled_pattern_list.append(re.compile(p, compile_flags))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
@@ -1376,7 +1376,7 @@ class spawn_unix (object):
         This method is also useful when you don't want to have to worry about
         escaping regular expression characters that you want to match."""
 
-        if type(pattern_list) in types.StringTypes or pattern_list in (TIMEOUT, EOF):
+        if type(pattern_list) in (str,) or pattern_list in (TIMEOUT, EOF):
             pattern_list = [pattern_list]
         return self.expect_loop(searcher_string(pattern_list), timeout, searchwindowsize)
 
@@ -1419,7 +1419,7 @@ class spawn_unix (object):
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()
-        except EOF, e:
+        except EOF as e:
             self.buffer = ''
             self.before = incoming
             self.after = EOF
@@ -1432,7 +1432,7 @@ class spawn_unix (object):
                 self.match = None
                 self.match_index = None
                 raise EOF (str(e) + '\n' + str(self))
-        except TIMEOUT, e:
+        except TIMEOUT as e:
             self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
@@ -1457,7 +1457,7 @@ class spawn_unix (object):
         """This returns the terminal window size of the child tty. The return
         value is a tuple of (rows, cols). """
 
-        TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912L)
+        TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
         s = struct.pack('HHHH', 0, 0, 0, 0)
         x = fcntl.ioctl(self.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
@@ -1479,7 +1479,7 @@ class spawn_unix (object):
         # Newer versions of Linux have totally different values for TIOCSWINSZ.
         # Note that this fix is a hack.
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-        if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.
+        if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
         # Note, assume ws_xpixel and ws_ypixel are zero.
         s = struct.pack('HHHH', r, c, 0, 0)
@@ -1557,7 +1557,7 @@ class spawn_unix (object):
             if self.child_fd in r:
                 try:
                     data = self.__interact_read(self.child_fd)
-                except OSError, e:
+                except OSError as e:
                     break
                 if output_filter: data = output_filter(data)
                 if self.logfile is not None:
@@ -1588,7 +1588,7 @@ class spawn_unix (object):
         while True:
             try:
                 return select.select (iwtd, owtd, ewtd, timeout)
-            except select.error, e:
+            except select.error as e:
                 if e[0] == errno.EINTR:
                     # if we loop back we have to subtract the amount of time we already waited.
                     if timeout is not None:
@@ -1656,7 +1656,7 @@ class spawn_windows (spawn_unix, object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
-        self.ocwd = os.getcwdu()
+        self.ocwd = os.getcwd()
         self.cwd = cwd
         self.env = env
         self.codepage = codepage
@@ -1969,7 +1969,7 @@ class Wtty:
             if childPid:
                 try:
                     self.__childProcess = win32api.OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, False, childPid)
-                except pywintypes.error, e:
+                except pywintypes.error as e:
                     pass
                 else:
                     self.pid = childPid
@@ -2126,11 +2126,11 @@ class Wtty:
     
         if len(s) == 0:
             return 0
-        records = [self.createKeyEvent(c) for c in unicode(s)]
+        records = [self.createKeyEvent(c) for c in str(s)]
         self.switchTo()
         try:
             wrote = self.__consin.WriteConsoleInput(records)
-        except Exception, e:
+        except Exception as e:
             log(e, '_exceptions')
             self.switchBack()
             raise
@@ -2197,7 +2197,7 @@ class Wtty:
             if (self.totalRead - self.lastRead + i + 1) % consinfo['Size'].X == 0:
                 strlist.append('\r\n')
 
-        s = '\r\n'.join([line.rstrip(u' ') for line in
+        s = '\r\n'.join([line.rstrip(' ') for line in
                          ''.join(strlist).split('\r\n')])
         try:
             return s.encode("cp%i" % self.codepage, 'replace')
@@ -2331,7 +2331,7 @@ class Wtty:
                     if eof and self.__oproc_isalive():
                         try:
                             TerminateProcess(self.__oproc, 0)
-                        except pywintypes.error, e:
+                        except pywintypes.error as e:
                             log(e, '_exceptions')
                             log('Could not terminate ConsoleReader after child exited.')
                     return ''
@@ -2346,7 +2346,7 @@ class Wtty:
                 end = time.clock()
                 timeout -= end - start
         
-        except Exception, e:
+        except Exception as e:
             log(e, '_exceptions')
             log('End Of File (EOF) in Wtty.read_nonblocking().')
             self.switchBack()
@@ -2365,7 +2365,7 @@ class Wtty:
         orig = PyCOORDType(0, 0)
         self.__consout.SetConsoleCursorPosition(orig)
         writelen = consinfo['Size'].X * consinfo['Size'].Y
-        self.__consout.FillConsoleOutputCharacter(u' ', writelen, orig)
+        self.__consout.FillConsoleOutputCharacter(' ', writelen, orig)
         self.__consout.WriteConsoleOutputCharacter(raw, orig)
         cursorPos.Y = 0
         self.__consout.SetConsoleCursorPosition(cursorPos)
@@ -2487,7 +2487,7 @@ class ConsoleReader:
             log("Setting console output code page to %s" % cp, 'consolereader', logdir)
             try:
                 SetConsoleOutputCP(cp)
-            except Exception, e:
+            except Exception as e:
                 log(e, 'consolereader_exceptions', logdir)
             else:
                 log("Console output code page: %s" % windll.kernel32.GetConsoleOutputCP(), 'consolereader', logdir)
@@ -2501,7 +2501,7 @@ class ConsoleReader:
                 si = GetStartupInfo()
                 self.__childProcess, _, childPid, self.__tid = CreateProcess(None, path, None, None, False, 
                                                                              CREATE_NEW_PROCESS_GROUP, None, None, si)
-            except Exception, e:
+            except Exception as e:
                 log(e, 'consolereader_exceptions', logdir)
                 time.sleep(.1)
                 win32api.PostThreadMessage(int(tid), WM_USER, 0, 0)
@@ -2521,7 +2521,7 @@ class ConsoleReader:
                     if GetExitCodeProcess(parent) != STILL_ACTIVE: 
                         try:
                             TerminateProcess(self.__childProcess, 0)
-                        except pywintypes.error, e:
+                        except pywintypes.error as e:
                             log(e, 'consolereader_exceptions', logdir)
                         sys.exit()
                     
@@ -2560,7 +2560,7 @@ class ConsoleReader:
 
             while GetExitCodeProcess(parent) == STILL_ACTIVE:   
                 time.sleep(.1)
-        except Exception, e:
+        except Exception as e:
             log(e, 'consolereader_exceptions', logdir)
     
     def handler(self, sig):       
@@ -2590,7 +2590,7 @@ class ConsoleReader:
                            max(rect.Bottom + 1, r or 16000))
         consout.SetConsoleScreenBufferSize(size)
         pos = PyCOORDType(0, 0)
-        consout.FillConsoleOutputCharacter(u' ', size.X * size.Y, pos)   
+        consout.FillConsoleOutputCharacter(' ', size.X * size.Y, pos)   
     
     def suspendThread(self):
         """Pauses the main thread of the child process."""
@@ -2629,7 +2629,7 @@ class searcher_string (object):
         self.eof_index = -1
         self.timeout_index = -1
         self._strings = []
-        for n, s in zip(range(len(strings)), strings):
+        for n, s in zip(list(range(len(strings))), strings):
             if s is EOF:
                 self.eof_index = n
                 continue
@@ -2650,7 +2650,7 @@ class searcher_string (object):
         if self.timeout_index >= 0:
             ss.append ((self.timeout_index,'    %d: TIMEOUT' % self.timeout_index))
         ss.sort()
-        ss = zip(*ss)[1]
+        ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -2727,7 +2727,7 @@ class searcher_re (object):
         self.eof_index = -1
         self.timeout_index = -1
         self._searches = []
-        for n, s in zip(range(len(patterns)), patterns):
+        for n, s in zip(list(range(len(patterns))), patterns):
             if s is EOF:
                 self.eof_index = n
                 continue
@@ -2748,7 +2748,7 @@ class searcher_re (object):
         if self.timeout_index >= 0:
             ss.append ((self.timeout_index,'    %d: TIMEOUT' % self.timeout_index))
         ss.sort()
-        ss = zip(*ss)[1]
+        ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -2825,12 +2825,12 @@ def log(e, suffix='', logdir=None):
         if os.path.isfile(logfile):
             try:
                 logstat = os.stat(logfile)
-            except Exception, exception:
+            except Exception as exception:
                 pass
             else:
                 try:
                     mtime = time.localtime(logstat.st_mtime)
-                except ValueError, exception:
+                except ValueError as exception:
                     # This can happen on Windows because localtime() is buggy on
                     # that platform. See:
                     # http://stackoverflow.com/questions/4434629/zipfile-module-in-python-runtime-problems
@@ -2842,7 +2842,7 @@ def log(e, suffix='', logdir=None):
                     # do rollover
                     try:
                         os.remove(logfile)
-                    except Exception, exception:
+                    except Exception as exception:
                         pass
         try:
             fout = open(logfile, 'a')
@@ -2871,7 +2871,7 @@ def which (filename):
         if os.access (filename, os.X_OK):
             return filename
 
-    if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+    if 'PATH' not in os.environ or os.environ['PATH'] == '':
         p = os.defpath
     else:
         p = os.environ['PATH']

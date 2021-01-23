@@ -137,7 +137,7 @@ class UntetheredFrame(BaseFrame):
 		self.grid.style = ""
 		self.grid.CreateGrid(0, 9)
 		self.grid.SetRowLabelSize(62)
-		for i in xrange(9):
+		for i in range(9):
 			if i in (3, 4):
 				size = self.grid.GetDefaultRowSize()
 				if i == 4:
@@ -173,15 +173,15 @@ class UntetheredFrame(BaseFrame):
 			# Use an accelerator table for tab, space, 0-9, A-Z, numpad,
 			# navigation keys and processing keys
 			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
-			keycodes.extend(range(ord("0"), ord("9")))
-			keycodes.extend(range(ord("A"), ord("Z")))
+			keycodes.extend(list(range(ord("0"), ord("9"))))
+			keycodes.extend(list(range(ord("A"), ord("Z"))))
 			keycodes.extend(numpad_keycodes)
 			keycodes.extend(nav_keycodes)
 			keycodes.extend(processing_keycodes)
 			for keycode in keycodes:
 				self.id_to_keycode[wx.Window.NewControlId()] = keycode
 			accels = []
-			for id, keycode in self.id_to_keycode.iteritems():
+			for id, keycode in self.id_to_keycode.items():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
 				accels.append((wx.ACCEL_NORMAL, keycode, id))
 				if keycode == wx.WXK_TAB:
@@ -234,11 +234,11 @@ class UntetheredFrame(BaseFrame):
 		self.stop_timer()
 		del self.timer
 		if hasattr(wx.Window, "UnreserveControlId"):
-			for id in self.id_to_keycode.iterkeys():
+			for id in self.id_to_keycode.keys():
 				if id < 0:
 					try:
 						wx.Window.UnreserveControlId(id)
-					except wx.wxAssertionError, exception:
+					except wx.wxAssertionError as exception:
 						safe_print(exception)
 		
 	def OnMove(self, event):
@@ -307,12 +307,12 @@ class UntetheredFrame(BaseFrame):
 		if hasattr(self.cgats[0], "APPROX_WHITE_POINT"):
 			self.cgats[0].remove_keyword("APPROX_WHITE_POINT")
 		# Remove L*a*b* from DATA_FORMAT if present
-		for i, label in reversed(self.cgats[0].DATA_FORMAT.items()):
+		for i, label in reversed(list(self.cgats[0].DATA_FORMAT.items())):
 			if label.startswith("LAB_"):
 				self.cgats[0].DATA_FORMAT.pop(i)
 		# Add XYZ to DATA_FORMAT if not yet present
 		for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
-			if not label in self.cgats[0].DATA_FORMAT.values():
+			if not label in list(self.cgats[0].DATA_FORMAT.values()):
 				self.cgats[0].DATA_FORMAT.add_data((label, ))
 		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] + ".ti3")
 		self.safe_send("Q")
@@ -536,7 +536,7 @@ class UntetheredFrame(BaseFrame):
 						row = query[i]
 						self.grid.SetCellBackgroundColour(query[i].SAMPLE_ID - 1,
 														  4, wx.Colour(*color))
-						for j in xrange(3):
+						for j in range(3):
 							self.grid.SetCellValue(query[i].SAMPLE_ID - 1, 5 + j, "%.2f" % Lab[j])
 					self.grid.MakeCellVisible(self.index, 0)
 					self.grid.ForceRefresh()
@@ -546,19 +546,19 @@ class UntetheredFrame(BaseFrame):
 					else:
 						# Jump to the next or previous unmeasured patch, if any
 						index = self.index
-						for i in xrange(self.index + 1, data_len):
+						for i in range(self.index + 1, data_len):
 							if (getcfg("untethered.measure.auto") or
 								not i in self.measured):
 								self.index = i
 								break
 						if self.index == index:
-							for i in xrange(self.index - 1, -1, -1):
+							for i in range(self.index - 1, -1, -1):
 								if not i in self.measured:
 									self.index = i
 									break
 						if self.index != index:
 							# Mark the row containing the next/previous patch
-							self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
+							self.grid.SetRowLabelValue(self.index, "\u25ba %i" % (self.index + 1))
 							self.grid.MakeCellVisible(self.index, 0)
 		if "key to take a reading" in txt and not self.last_error:
 			if getcfg("untethered.measure.auto") and self.is_measuring:
@@ -593,7 +593,7 @@ class UntetheredFrame(BaseFrame):
 		col_w = round(grid_w / (num_cols - 1))
 		last_col_w = grid_w - col_w * (num_cols - 2)
 		self.grid.SetRowLabelSize(col_w)
-		for i in xrange(num_cols):
+		for i in range(num_cols):
 			if i in (3, 4):
 				w = self.grid.GetDefaultRowSize()
 			elif i == num_cols - 1:
@@ -660,7 +660,7 @@ class UntetheredFrame(BaseFrame):
 			self.panel_XYZ.Refresh()
 			self.panel_XYZ.Update()
 		if mark_current_row:
-			self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
+			self.grid.SetRowLabelValue(self.index, "\u25ba %i" % (self.index + 1))
 			self.grid.MakeCellVisible(self.index, 0)
 		if self.index not in self.grid.GetSelectedRows():
 			self.grid.SelectRow(self.index)
@@ -699,7 +699,7 @@ class UntetheredFrame(BaseFrame):
 
 
 if __name__ == "__main__":
-	from thread import start_new_thread
+	from _thread import start_new_thread
 	from time import sleep
 	import random
 	from util_io import Files
@@ -721,13 +721,13 @@ if __name__ == "__main__":
 		def abort_subprocess(self):
 			self.safe_send("Q")
 		def safe_send(self, bytes):
-			print "*** Sending %r" % bytes
+			print("*** Sending %r" % bytes)
 			self.subprocess.send(bytes)
 			return True
 	config.initcfg()
-	print "untethered.min_delta", getcfg("untethered.min_delta")
-	print "untethered.min_delta.lightness", getcfg("untethered.min_delta.lightness")
-	print "untethered.max_delta.chroma", getcfg("untethered.max_delta.chroma")
+	print("untethered.min_delta", getcfg("untethered.min_delta"))
+	print("untethered.min_delta.lightness", getcfg("untethered.min_delta.lightness"))
+	print("untethered.max_delta.chroma", getcfg("untethered.max_delta.chroma"))
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
@@ -754,7 +754,7 @@ END_DATA
 	app.TopWindow.Show()
 	files = Files([app.TopWindow.worker, app.TopWindow])
 	def test(bytes=None):
-		print "*** Received %r" % bytes
+		print("*** Received %r" % bytes)
 		menu = r"""Place instrument on spot to be measured,
 and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
@@ -796,6 +796,6 @@ or place on the white calibration reference,
 			sleep(.03125)
 			if app.TopWindow:
 				wx.CallAfter(files.write, line)
-				print line
+				print(line)
 	start_new_thread(test, tuple())
 	app.MainLoop()

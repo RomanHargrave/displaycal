@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 from time import sleep
 import errno
 import os
@@ -57,7 +57,7 @@ class ScriptingClientFrame(SimpleTerminal):
 					for line in historyfile:
 						self.history.append(safe_unicode(line,
 														 "UTF-8").rstrip("\r\n"))
-			except EnvironmentError, exception:
+			except EnvironmentError as exception:
 				safe_print("Warning - couldn't read history file:", exception)
 		# Always have empty selection at bottom
 		self.history.append("")
@@ -118,7 +118,7 @@ class ScriptingClientFrame(SimpleTerminal):
 				for command in self.history:
 					if command:
 						historyfile.write(safe_str(command, "UTF-8") + os.linesep)
-		except EnvironmentError, exception:
+		except EnvironmentError as exception:
 			safe_print("Warning - couldn't write history file:", exception)
 		self.listening = False
 		# Need to use CallAfter to prevent hang under Windows if minimized
@@ -152,7 +152,7 @@ class ScriptingClientFrame(SimpleTerminal):
 					 additional_commands=None, colorize=True):
 		try:
 			result = delayedResult.get()
-		except Exception, exception:
+		except Exception as exception:
 			if hasattr(exception, "originalTraceback"):
 				self.add_text(exception.originalTraceback)
 			result = exception
@@ -223,7 +223,7 @@ class ScriptingClientFrame(SimpleTerminal):
 			try:
 				peer = self.conn.getpeername()
 				self.conn.shutdown(socket.SHUT_RDWR)
-			except socket.error, exception:
+			except socket.error as exception:
 				if exception.errno != errno.ENOTCONN:
 					self.add_text(safe_unicode(exception) + "\n")
 			else:
@@ -250,7 +250,7 @@ class ScriptingClientFrame(SimpleTerminal):
 											 self.conn.getpeername())) +
 								 "\n%s\n" %
 								 lang.getstr("scripting-client.cmdhelptext"))
-		except socket.error, exception:
+		except socket.error as exception:
 			return exception
 
 	def get_commands(self):
@@ -260,7 +260,7 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def get_common_commands(self):
 		cmds = SimpleTerminal.get_common_commands(self)
-		return filter(lambda cmd: not cmd.startswith("echo "), cmds)
+		return [cmd for cmd in cmds if not cmd.startswith("echo ")]
 
 	def get_last_line(self):
 		linecount = self.console.GetNumberOfLines()
@@ -280,7 +280,7 @@ class ScriptingClientFrame(SimpleTerminal):
 	def get_response(self):
 		try:
 			return "< " + "\n< ".join(self.conn.get_single_response().splitlines())
-		except socket.error, exception:
+		except socket.error as exception:
 			return exception
 
 	def key_handler(self, event):
@@ -485,7 +485,7 @@ class ScriptingClientFrame(SimpleTerminal):
 	def send_command(self, command):
 		try:
 			self.conn.send_command(command)
-		except socket.error, exception:
+		except socket.error as exception:
 			return exception
 		if not wx.GetApp().IsMainLoopRunning():
 			delayedresult.AbortEvent()()

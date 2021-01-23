@@ -40,7 +40,7 @@ class SynthICCFrame(BaseFrame):
 	cfg = config.cfg
 
 	# Shared methods from 3D LUT UI
-	for lut3d_ivar_name, lut3d_ivar in LUT3DFrame.__dict__.iteritems():
+	for lut3d_ivar_name, lut3d_ivar in LUT3DFrame.__dict__.items():
 		if lut3d_ivar_name.startswith("lut3d_"):
 			locals()[lut3d_ivar_name] = lut3d_ivar
 	
@@ -262,7 +262,7 @@ class SynthICCFrame(BaseFrame):
 				self.black_luminance_ctrl_handler(None)
 				if not XYZ[-1]:
 					XYZ = [0, 0, 0]
-					for i in xrange(3):
+					for i in range(3):
 						getattr(self, "black_%s" % "XYZ"[i]).SetValue(0)
 					break
 		self.parse_XYZ("black")
@@ -302,7 +302,7 @@ class SynthICCFrame(BaseFrame):
 									 value=self.white_x.GetValue())
 		sizer.Add(x_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)
-		sizer.Add(wx.StaticText(dlg, -1, u"x"), 0,
+		sizer.Add(wx.StaticText(dlg, -1, "x"), 0,
 								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 								border=12)
 		y_ctrl = floatspin.FloatSpin(dlg, -1, size=(75 * scale, -1),
@@ -311,7 +311,7 @@ class SynthICCFrame(BaseFrame):
 									 value=self.white_y.GetValue())
 		sizer.Add(y_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)
-		sizer.Add(wx.StaticText(dlg, -1, u"y"), 0,
+		sizer.Add(wx.StaticText(dlg, -1, "y"), 0,
 								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 								border=12)
 		dlg.sizer3.Add(wx.StaticText(dlg, -1,
@@ -327,8 +327,8 @@ class SynthICCFrame(BaseFrame):
 		cat_choices_ab = OrderedDict(get_mapping(((k, k) for k in
 												  colormath.cat_matrices),
 												 cat_choices))
-		cat_choices_ba = OrderedDict((v, k) for k, v in cat_choices_ab.iteritems())
-		cat_ctrl = wx.Choice(dlg, -1, choices=cat_choices_ab.values())
+		cat_choices_ba = OrderedDict((v, k) for k, v in cat_choices_ab.items())
+		cat_ctrl = wx.Choice(dlg, -1, choices=list(cat_choices_ab.values()))
 		cat_ctrl.SetStringSelection(cat_choices_ab[self.cat])
 		dlg.sizer3.Add(cat_ctrl, 0, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
 		dlg.sizer0.SetSizeHints(dlg)
@@ -376,7 +376,7 @@ class SynthICCFrame(BaseFrame):
 		""" ICC profile dropped """
 		try:
 			profile = ICCP.ICCProfile(path)
-		except (IOError, ICCP.ICCProfileInvalidError), exception:
+		except (IOError, ICCP.ICCProfileInvalidError) as exception:
 			show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
 									 path), self)
 		else:
@@ -393,11 +393,11 @@ class SynthICCFrame(BaseFrame):
 								   self)
 				return
 			rgb = [(1, 1, 1), (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
-			for i in xrange(256):
+			for i in range(256):
 				rgb.append((1.0 / 255 * i, 1.0 / 255 * i, 1.0 / 255 * i))
 			try:
 				colors = self.worker.xicclu(profile, rgb, intent="a", pcs="x")
-			except Exception, exception:
+			except Exception as exception:
 				show_result_dialog(exception, self)
 			else:
 				if "lumi" in profile.tags:
@@ -458,7 +458,7 @@ class SynthICCFrame(BaseFrame):
 		""" TI3 file dropped """
 		try:
 			ti3 = CGATS.CGATS(path)
-		except (IOError, CGATS.CGATSInvalidError), exception:
+		except (IOError, CGATS.CGATSInvalidError) as exception:
 			show_result_dialog(Error(lang.getstr("error.measurement.file_invalid",
 												 path)), self)
 		else:
@@ -480,11 +480,11 @@ class SynthICCFrame(BaseFrame):
 				(ti3_extracted,
 				 RGB_XYZ_extracted,
 				 RGB_XYZ_remaining) = extract_device_gray_primaries(ti3)
-			except Error, exception:
+			except Error as exception:
 				show_result_dialog(exception, self)
 			else:
 				RGB_XYZ_extracted.sort()
-				colors.extend(RGB_XYZ_extracted.values())
+				colors.extend(list(RGB_XYZ_extracted.values()))
 				luminance = ti3.queryv1("LUMINANCE_XYZ_CDM2")
 				if luminance:
 					try:
@@ -778,9 +778,9 @@ class SynthICCFrame(BaseFrame):
 		wkwargs = {"rgb": self.colorspace_rgb_ctrl.Value,
 				   "rolloff": rolloff,
 				   "bpc": self.bpc_ctrl.Value,
-				   "profile_class": self.profile_classes.keys()[class_i],
-				   "tech": self.tech.keys()[tech_i],
-				   "ciis": self.ciis.keys()[ciis_i]}
+				   "profile_class": list(self.profile_classes.keys())[class_i],
+				   "tech": list(self.tech.keys())[tech_i],
+				   "ciis": list(self.ciis.keys())[ciis_i]}
 		if (trc == -2084 and rolloff) or trc == -2:
 			if trc == -2084:
 				msg = "smpte2084.rolloffclip"
@@ -849,7 +849,7 @@ class SynthICCFrame(BaseFrame):
 					# Grayscale profile
 					profile.tags.kTRC.set_dicom_trc(self.getcfg("synthprofile.black_luminance"),
 													self.getcfg("synthprofile.luminance"))
-			except ValueError, exception:
+			except ValueError as exception:
 				return exception
 		elif trc > -1 and black != [0, 0, 0]:
 			# Gamma with output offset or Rec. 1886-like
@@ -988,7 +988,7 @@ class SynthICCFrame(BaseFrame):
 		profile.calculateID()
 		try:
 			profile.write(path)
-		except Exception, exception:
+		except Exception as exception:
 			return exception
 	
 	def setup_language(self):
@@ -1005,23 +1005,23 @@ class SynthICCFrame(BaseFrame):
 		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 										   lang.getstr("trc.type.absolute")])
 
-		self.profile_classes = OrderedDict(get_mapping(ICCP.profileclass.items(),
+		self.profile_classes = OrderedDict(get_mapping(list(ICCP.profileclass.items()),
 													   ["mntr", "scnr"]))
-		self.profile_class_ctrl.SetItems(self.profile_classes.values())
+		self.profile_class_ctrl.SetItems(list(self.profile_classes.values()))
 		self.profile_class_ctrl.SetSelection(0)
 
 		self.tech = OrderedDict(get_mapping([("", "unspecified")] +
-											ICCP.tech.items(),
+											list(ICCP.tech.items()),
 											["", "fscn", "dcam", "rscn", "vidm",
 											 "vidc", "pjtv", "CRT ", "PMD ",
 											 "AMD ", "mpfs", "dmpc", "dcpj"]))
-		self.tech_ctrl.SetItems(self.tech.values())
+		self.tech_ctrl.SetItems(list(self.tech.values()))
 		self.tech_ctrl.SetSelection(0)
 
 		self.ciis = OrderedDict(get_mapping([("", "unspecified")] +
-											 ICCP.ciis.items(),
+											 list(ICCP.ciis.items()),
 											["", "scoe", "sape", "fpce"]))
-		self.ciis_ctrl.SetItems(self.ciis.values())
+		self.ciis_ctrl.SetItems(list(self.ciis.values()))
 		self.ciis_ctrl.SetSelection(0)
 	
 	def trc_ctrl_handler(self, event=None):
@@ -1170,7 +1170,7 @@ class SynthICCFrame(BaseFrame):
 
 def get_mapping(mapping, keys):
 	return sorted([(k, lang.getstr(v.lower().replace(" ", "_"))) for k, v in
-				   filter(lambda item: item[0] in keys, mapping)],
+				   [item for item in mapping if item[0] in keys]],
 				  key=lambda item: item[0])
 
 

@@ -2,7 +2,7 @@
 
 # http://code.activestate.com/recipes/146306-http-client-to-post-using-multipartform-data/
 
-import httplib
+import http.client
 import mimetypes
 import uuid
 
@@ -14,7 +14,7 @@ def post_multipart(host, selector, fields, files, charset="UTF-8"):
     Return the server's response page.
     """
     content_type, body = encode_multipart_formdata(fields, files, charset)
-    h = httplib.HTTPConnection(host)
+    h = http.client.HTTPConnection(host)
     h.putrequest('POST', selector)
     h.putheader('Content-Type', content_type)
     h.putheader('Content-Length', str(len(body)))

@@ -11,7 +11,7 @@ from options import verbose
 
 def get_osascript_args(applescript):
 	""" Return arguments ready to use for osascript """
-	if isinstance(applescript, basestring):
+	if isinstance(applescript, str):
 		applescript = applescript.splitlines()
 	args = []
 	for line in applescript:

@@ -3,7 +3,7 @@
 from ctypes import wintypes
 import ctypes
 import _ctypes
-import _winreg
+import winreg
 import os
 import platform
 import struct
@@ -91,7 +91,7 @@ def _get_icm_display_device_key(devicekey):
 	subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
 						"CurrentVersion", "ICM", "ProfileAssociations", 
 						"Display"] + monkey)
-	return _winreg.CreateKey(_winreg.HKEY_CURRENT_USER, subkey)
+	return winreg.CreateKey(winreg.HKEY_CURRENT_USER, subkey)
 
 
 def _get_mscms_windll():
@@ -113,9 +113,9 @@ def calibration_management_isenabled():
 	if False:
 		# Using registry - NEVER
 		# Also, does not work!
-		with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+		with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
 							 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration") as key:
-			return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
+			return bool(winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
 	else:
 		# Using ctypes
 		mscms = _get_mscms_windll()
@@ -143,11 +143,11 @@ def enable_calibration_management(enable=True):
 	if False:
 		# Using registry - NEVER
 		# Also, does not work!
-		with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+		with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
 							 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration",
-							 _winreg.KEY_SET_VALUE) as key:
-			_winreg.SetValueEx(key, "CalibrationManagementEnabled", 0,
-							   _winreg.REG_DWORD, int(enable))
+							 winreg.KEY_SET_VALUE) as key:
+			winreg.SetValueEx(key, "CalibrationManagementEnabled", 0,
+							   winreg.REG_DWORD, int(enable))
 	else:
 		# Using ctypes (must be called with elevated permissions)
 		mscms = _get_mscms_windll()
@@ -171,15 +171,15 @@ def enable_per_user_profiles(enable=True, display_no=0, devicekey=None):
 	if devicekey:
 		if USE_REGISTRY:
 			with _get_icm_display_device_key(devicekey) as key:
-				_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
-								   _winreg.REG_DWORD, int(enable))
+				winreg.SetValueEx(key, "UsePerUserProfiles", 0,
+								   winreg.REG_DWORD, int(enable))
 		else:
 			# Using ctypes - this leaks registry key handles internally in 
 			# WcsSetUsePerUserProfiles since Windows 10 1903
 			mscms = _get_mscms_windll()
 			if not mscms:
 				return False
-			if not mscms.WcsSetUsePerUserProfiles(unicode(devicekey),
+			if not mscms.WcsSetUsePerUserProfiles(str(devicekey),
 																CLASS_MONITOR,
 																enable):
 				raise get_windows_error(ctypes.windll.kernel32.GetLastError())
@@ -319,7 +319,7 @@ def get_file_info(filename):
 					 "LegalTrademarks", "OriginalFilename", "PrivateBuild",
 					 "ProductName", "ProductVersion", "SpecialBuild"]:
 			value = win32api.GetFileVersionInfo(filename,
-												u"\\StringFileInfo\\%04X%04X\\%s" %
+												"\\StringFileInfo\\%04X%04X\\%s" %
 												(lcid, codepage, name))
 			if value is not None:
 				info["StringFileInfo"][lcid, codepage][name] = value
@@ -340,7 +340,7 @@ def get_pids():
 			pids_count *= 2
 			continue
 		count = bytes.value / (pids_size / pids_count)
-		return filter(None, pids[:count])
+		return [_f for _f in pids[:count] if _f]
 
 
 def get_real_display_devices_info():
@@ -375,8 +375,8 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 		if USE_REGISTRY:
 			with _get_icm_display_device_key(devicekey) as key:
 				try:
-					return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
-				except WindowsError, exception:
+					return bool(winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
+				except WindowsError as exception:
 					if exception.args[0] == winerror.ERROR_FILE_NOT_FOUND:
 						return False
 					raise
@@ -385,7 +385,7 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 			# WcsGetUsePerUserProfiles since Windows 10 1903
 			mscms = _get_mscms_windll()
 			pbool = ctypes.pointer(ctypes.c_bool())
-			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(devicekey),
+			if not mscms or not mscms.WcsGetUsePerUserProfiles(str(devicekey),
 																CLASS_MONITOR,
 																pbool):
 				return
@@ -444,23 +444,23 @@ def win_ver():
 	release = ""
 	build = ""
 	key = None
-	sam = _winreg.KEY_READ
+	sam = winreg.KEY_READ
 	if platform.machine() == "AMD64":
-		sam |= _winreg.KEY_WOW64_64KEY
+		sam |= winreg.KEY_WOW64_64KEY
 	try:
-		key = _winreg.OpenKeyEx(_winreg.HKEY_LOCAL_MACHINE,
+		key = winreg.OpenKeyEx(winreg.HKEY_LOCAL_MACHINE,
 								r"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
 								0, sam)
-		pname = _winreg.QueryValueEx(key, "ProductName")[0]
-		build = "Build %s" % _winreg.QueryValueEx(key, "CurrentBuildNumber")[0]
+		pname = winreg.QueryValueEx(key, "ProductName")[0]
+		build = "Build %s" % winreg.QueryValueEx(key, "CurrentBuildNumber")[0]
 		# Since Windows 10
-		release = "Version %s" % _winreg.QueryValueEx(key, "ReleaseId")[0]
-		build += ".%s" % _winreg.QueryValueEx(key, "UBR")[0]
-	except Exception, e:
+		release = "Version %s" % winreg.QueryValueEx(key, "ReleaseId")[0]
+		build += ".%s" % winreg.QueryValueEx(key, "UBR")[0]
+	except Exception as e:
 		pass
 	finally:
 		if key:
-			_winreg.CloseKey(key)
+			winreg.CloseKey(key)
 	return pname, csd, release, build
 
 
@@ -488,7 +488,7 @@ class UnloadableWinDLL(object):
 		self.load()
 		return getattr(self._windll, name)
 
-	def __nonzero__(self):
+	def __bool__(self):
 		self.load()
 		return bool(self._windll)
 
@@ -542,7 +542,7 @@ class MSCMS(UnloadableWinDLL):
 				# Need to free icm32 first, otherwise mscms won't unload
 				try:
 					_free_library(self._icm32_handle)
-				except WindowsError, exception:
+				except WindowsError as exception:
 					if exception.args[0] != winerror.ERROR_MOD_NOT_FOUND:
 						raise
 			UnloadableWinDLL.unload(self)
@@ -552,8 +552,8 @@ if __name__ == "__main__":
 	if "calibration" in sys.argv[1:]:
 		if "enable" in sys.argv[1:] or "disable" in sys.argv[1:]:
 			enable_calibration_management(sys.argv[1:][-1] != "disable")
-		print calibration_management_isenabled()
+		print(calibration_management_isenabled())
 	elif "per_user_profiles" in sys.argv[1:]:
 		if "enable" in sys.argv[1:] or "disable" in sys.argv[1:]:
 			enable_per_user_profiles(sys.argv[1:][-1] != "disable")
-		print per_user_profiles_isenabled()
+		print(per_user_profiles_isenabled())

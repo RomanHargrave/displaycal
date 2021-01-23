@@ -30,6 +30,6 @@ def stripzeros(n):
 		n = n.rstrip("0").rstrip(".")
 	try:
 		n = decimal.Decimal(n)
-	except decimal.InvalidOperation, exception:
+	except decimal.InvalidOperation as exception:
 		pass
 	return n

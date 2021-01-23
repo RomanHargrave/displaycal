@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import os
 import sys
 if sys.platform not in ("darwin", "win32"):
@@ -32,7 +32,7 @@ elif sys.platform == "win32":
 		MAX_PATH = 260
 		def SHGetSpecialFolderPath(hwndOwner, nFolder, create=0):
 			""" ctypes wrapper around shell32.SHGetSpecialFolderPathW """
-			buffer = ctypes.create_unicode_buffer(u'\0' * MAX_PATH)
+			buffer = ctypes.create_unicode_buffer('\0' * MAX_PATH)
 			ctypes.windll.shell32.SHGetSpecialFolderPathW(0, buffer, nFolder, 
 														  create)
 			return buffer.value
@@ -63,7 +63,7 @@ def get_known_folder_path(folderid, user=True):
 			folder_path = win_knownpaths.get_path(getattr(win_knownpaths.FOLDERID, folderid),
 												  getattr(win_knownpaths.UserHandle,
 														  "current" if user else "common"))
-		except Exception, exception:
+		except Exception as exception:
 			from log import safe_print
 			safe_print("Warning: Could not get known folder %r" % folderid)
 	elif sys.platform not in ("darwin", "win32"):
@@ -91,12 +91,12 @@ if sys.platform == "win32":
 	# exception if the folder does not yet exist
 	try:
 		library_home = appdata = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
-	except Exception, exception:
+	except Exception as exception:
 		raise Exception("FATAL - Could not get/create user application data folder: %s"
 						% exception)
 	try:
 		localappdata = SHGetSpecialFolderPath(0, CSIDL_LOCAL_APPDATA, 1)
-	except Exception, exception:
+	except Exception as exception:
 		localappdata = os.path.join(appdata, "Local")
 	cache = localappdata
 	# Argyll CMS uses ALLUSERSPROFILE for local system wide app related data
@@ -110,37 +110,37 @@ if sys.platform == "win32":
 	else:
 		try:
 			commonappdata = [SHGetSpecialFolderPath(0, CSIDL_COMMON_APPDATA, 1)]
-		except Exception, exception:
+		except Exception as exception:
 			raise Exception("FATAL - Could not get/create common application data folder: %s"
 							% exception)
 	library = commonappdata[0]
 	try:
 		commonprogramfiles = SHGetSpecialFolderPath(0, CSIDL_PROGRAM_FILES_COMMON, 1)
-	except Exception, exception:
+	except Exception as exception:
 		raise Exception("FATAL - Could not get/create common program files folder: %s"
 						% exception)
 	try:
 		autostart = SHGetSpecialFolderPath(0, CSIDL_COMMON_STARTUP, 1)
-	except Exception, exception:
+	except Exception as exception:
 		autostart = None
 	try:
 		autostart_home = SHGetSpecialFolderPath(0, CSIDL_STARTUP, 1)
-	except Exception, exception:
+	except Exception as exception:
 		autostart_home = None
 	try:
 		iccprofiles = [os.path.join(SHGetSpecialFolderPath(0, CSIDL_SYSTEM), 
 									"spool", "drivers", "color")]
-	except Exception, exception:
+	except Exception as exception:
 		raise Exception("FATAL - Could not get system folder: %s"
 						% exception)
 	iccprofiles_home = iccprofiles
 	try:
 		programs = SHGetSpecialFolderPath(0, CSIDL_PROGRAMS, 1)
-	except Exception, exception:
+	except Exception as exception:
 		programs = None
 	try:
 		commonprograms = [SHGetSpecialFolderPath(0, CSIDL_COMMON_PROGRAMS, 1)]
-	except Exception, exception:
+	except Exception as exception:
 		commonprograms = []
 elif sys.platform == "darwin":
 	library_home = os.path.join(home, "Library")
@@ -167,20 +167,20 @@ else:
 		cache_home = getenvu("XDG_CACHE_HOME", expandvarsu("$HOME/.cache"))
 		config_home = getenvu("XDG_CONFIG_HOME", expandvarsu("$HOME/.config"))
 		config_dir_default = "/etc/xdg"
-		config_dirs = map(os.path.normpath,
+		config_dirs = list(map(os.path.normpath,
 						  getenvu("XDG_CONFIG_DIRS", 
-								  config_dir_default).split(os.pathsep))
+								  config_dir_default).split(os.pathsep)))
 		if not config_dir_default in config_dirs:
 			config_dirs.append(config_dir_default)
 		data_home_default = expandvarsu("$HOME/.local/share")
 		data_home = getenvu("XDG_DATA_HOME", data_home_default)
 		data_dirs_default = "/usr/local/share:/usr/share:/var/lib"
-		data_dirs = map(os.path.normpath,
+		data_dirs = list(map(os.path.normpath,
 						getenvu("XDG_DATA_DIRS",
-								data_dirs_default).split(os.pathsep))
-		data_dirs.extend(filter(lambda data_dir, data_dirs=data_dirs:
+								data_dirs_default).split(os.pathsep)))
+		data_dirs.extend(list(filter(lambda data_dir, data_dirs=data_dirs:
 								not data_dir in data_dirs,
-								data_dirs_default.split(os.pathsep)))
+								data_dirs_default.split(os.pathsep))))
 
 		@staticmethod
 		def set_translation(obj):
@@ -197,7 +197,7 @@ else:
 				obj.translation = gettext.translation(obj.GETTEXT_PACKAGE,
 													  locale_dir,
 													  codeset="UTF-8")
-			except IOError, exception:
+			except IOError as exception:
 				from log import safe_print
 				safe_print("XDG:", exception)
 				obj.translation = gettext.NullTranslations()
@@ -242,7 +242,7 @@ else:
 				with open(path, "r") as f:
 					for key, value in XDG.config_file_parser(f):
 						fn(key, value)
-			except EnvironmentError, exception:
+			except EnvironmentError as exception:
 				from log import safe_print
 				safe_print("XDG: Couldn't read '%s':" % path, exception)
 				return False
@@ -353,7 +353,7 @@ else:
 
 	for name in dir(XDG):
 		attr = getattr(XDG, name)
-		if isinstance(attr, (basestring, list)):
+		if isinstance(attr, (str, list)):
 			locals()["xdg_" + name] = attr
 	del name, attr
 

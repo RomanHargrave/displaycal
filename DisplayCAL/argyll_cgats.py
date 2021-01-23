@@ -40,7 +40,7 @@ def add_dispcal_options_to_cal(cal, options_dispcal):
 							 " ".join(options_dispcal).encode("UTF-7", 
 															  "replace"))
 		return cgats
-	except Exception, exception:
+	except Exception as exception:
 		safe_print(safe_unicode(traceback.format_exc()))
 
 
@@ -59,7 +59,7 @@ def add_options_to_ti3(ti3, options_dispcal=None, options_colprof=None):
 							   " ".join(options_dispcal).encode("UTF-7", 
 																"replace"))
 		return cgats
-	except Exception, exception:
+	except Exception as exception:
 		safe_print(safe_unicode(traceback.format_exc()))
 
 
@@ -100,18 +100,18 @@ def cal_to_vcgt(cal, return_cgats=False):
 			cal = CGATS.CGATS(cal)
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
+			CGATS.CGATSTypeError, CGATS.CGATSValueError) as exception:
+			safe_print("Warning - couldn't process CGATS file '%s': %s" % 
 					   tuple(safe_unicode(s) for s in (cal, exception)))
 			return None
 	required_fields = ("RGB_I", "RGB_R", "RGB_G", "RGB_B")
 	data_format = cal.queryv1("DATA_FORMAT")
 	if data_format:
 		for field in required_fields:
-			if not field in data_format.values():
+			if not field in list(data_format.values()):
 				if debug: safe_print("[D] Missing required field:", field)
 				return None
-		for field in data_format.values():
+		for field in list(data_format.values()):
 			if not field in required_fields:
 				if debug: safe_print("[D] Unknown field:", field)
 				return None
@@ -140,8 +140,8 @@ def can_update_cal(path):
 	""" Check if cal can be updated by checking for required fields. """
 	try:
 		calstat = os.stat(path)
-	except Exception, exception:
-		safe_print(u"Warning - os.stat('%s') failed: %s" % 
+	except Exception as exception:
+		safe_print("Warning - os.stat('%s') failed: %s" % 
 				   tuple(safe_unicode(s) for s in (path, exception)))
 		return False
 	if not path in cals or cals[path].mtime != calstat.st_mtime:
@@ -149,10 +149,10 @@ def can_update_cal(path):
 			cal = CGATS.CGATS(path)
 		except (IOError, CGATS.CGATSInvalidError, 
 			CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-			CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+			CGATS.CGATSTypeError, CGATS.CGATSValueError) as exception:
 			if path in cals:
 				del cals[path]
-			safe_print(u"Warning - couldn't process CGATS file '%s': %s" % 
+			safe_print("Warning - couldn't process CGATS file '%s': %s" % 
 					   tuple(safe_unicode(s) for s in (path, exception)))
 		else:
 			if cal.queryv1("DEVICE_CLASS") == "DISPLAY" and not None in \
@@ -202,7 +202,7 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 	else:
 		try:
 			cgats = get_cgats(arg)
-		except (IOError, CGATS.CGATSError), exception:
+		except (IOError, CGATS.CGATSError) as exception:
 			raise Error(lang.getstr("cal_extraction_failed"))
 	if (cal and not prefer_cal and isinstance(profile.tags.get("vcgt"),
 											  ICCP.VideoCardGammaType)):
@@ -234,7 +234,7 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 				# value to account for this
 				oldmin = (black / 256.0) * (65536 / 65535.)
 				oldmax = (white / 256.0) * (65536 / 65535.)
-				for entry in data.itervalues():
+				for entry in data.values():
 					for column in "RGB":
 						v_old = entry["RGB_" + column]
 						lvl = round(v_old * (65535 / 65536.) * 256, 2)
@@ -276,7 +276,7 @@ def extract_cal_from_ti3(ti3):
 	"""
 	if isinstance(ti3, CGATS.CGATS):
 		ti3 = str(ti3)
-	if isinstance(ti3, basestring):
+	if isinstance(ti3, str):
 		ti3 = StringIO(ti3)
 	cal = False
 	cal_lines = []
@@ -306,7 +306,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 	from worker import get_options_from_profile
 	try:
 		profile = ICCP.ICCProfile(source_filename)
-	except (IOError, ICCP.ICCProfileInvalidError), exception:
+	except (IOError, ICCP.ICCProfileInvalidError) as exception:
 		return exception
 	if "CIED" in profile.tags or "targ" in profile.tags:
 		cal_lines = []
@@ -354,7 +354,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 									if o[0] == "G":
 										try:
 											trc = 0 - Decimal(trc)
-										except decimal.InvalidOperation, \
+										except decimal.InvalidOperation as \
 											   exception:
 											continue
 								cal_lines.append('KEYWORD "TARGET_GAMMA"')
@@ -398,7 +398,7 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 					f = open(target_filename, "w")
 					f.write("\n".join(cal_lines))
 					f.close()
-				except Exception, exception:
+				except Exception as exception:
 					return exception
 			return cal_lines
 	else:
@@ -433,11 +433,11 @@ END_DATA""")[0]
 					   (0.0, 0.0, 100.0),
 					   (50.0, 50.0, 50.0)])
 		if logfn:
-			logfn(u"Extracting neutrals and primaries from %s" %
+			logfn("Extracting neutrals and primaries from %s" %
 				  ti3.filename)
 	else:
 		if logfn:
-			logfn(u"Extracting neutrals from %s" %
+			logfn("Extracting neutrals from %s" %
 				  ti3.filename)
 	RGB_XYZ_extracted = OrderedDict()
 	RGB_XYZ_remaining = OrderedDict()
@@ -446,7 +446,7 @@ END_DATA""")[0]
 		white = ti3.get_white_cie("XYZ")
 		str_thresh = str(neutrals_ab_threshold)
 		round_digits = len(str_thresh[str_thresh.find(".") + 1:])
-	for i, item in ti3.DATA.iteritems():
+	for i, item in ti3.DATA.items():
 		if not i:
 			# Check if fields are missing
 			for prefix in ("RGB", "XYZ"):
@@ -466,7 +466,7 @@ END_DATA""")[0]
 					# always the first encountered white that will have Y = 100,
 					# even if subsequent white readings may be higher)
 					XYZ = tuple(RGB_XYZ[RGB][i] + XYZ[i]
-								for i in xrange(3))
+								for i in range(3))
 					if not RGB in dupes:
 						dupes[RGB] = 1.0
 					dupes[RGB] += 1.0
@@ -490,11 +490,11 @@ END_DATA""")[0]
 		elif not RGB in [(100.0, 100.0, 100.0),
 						 (0.0, 0.0, 0.0)]:
 			RGB_XYZ_remaining[RGB] = XYZ
-	for RGB, count in dupes.iteritems():
+	for RGB, count in dupes.items():
 		for RGB_XYZ in (RGB_XYZ_extracted, RGB_XYZ_remaining):
 			if RGB in RGB_XYZ:
 				# Average values
-				XYZ = tuple(RGB_XYZ[RGB][i] / count for i in xrange(3))
+				XYZ = tuple(RGB_XYZ[RGB][i] / count for i in range(3))
 				RGB_XYZ[RGB] = XYZ
 	return ti3_extracted, RGB_XYZ_extracted, RGB_XYZ_remaining
 
@@ -571,10 +571,10 @@ def verify_cgats(cgats, required, ignore_unknown=True):
 		if cgats_1.queryv1("NUMBER_OF_SETS"):
 			if cgats_1.queryv1("DATA_FORMAT"):
 				for field in required:
-					if not field in cgats_1.queryv1("DATA_FORMAT").values():
+					if not field in list(cgats_1.queryv1("DATA_FORMAT").values()):
 						raise CGATS.CGATSKeyError("Missing required field: %s" % field)
 				if not ignore_unknown:
-					for field in cgats_1.queryv1("DATA_FORMAT").values():
+					for field in list(cgats_1.queryv1("DATA_FORMAT").values()):
 						if not field in required:
 							raise CGATS.CGATSError("Unknown field: %s" % field)
 			else:

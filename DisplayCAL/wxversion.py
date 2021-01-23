@@ -143,7 +143,7 @@ def select(versions, optionsRequired=False):
 
     # If we get here then this is the first time wxversion is used, 
     # ensure that wxPython hasn't been imported yet.
-    if sys.modules.has_key('wx') or sys.modules.has_key('wxPython'):
+    if 'wx' in sys.modules or 'wxPython' in sys.modules:
         raise AlreadyImportedError("wxversion.select() must be called before wxPython is imported")
     
     # Look for a matching version and manipulate the sys.path as
@@ -181,7 +181,7 @@ def ensureMinimal(minVersion, optionsRequired=False):
     assert type(minVersion) == str
 
     # ensure that wxPython hasn't been imported yet.
-    if sys.modules.has_key('wx') or sys.modules.has_key('wxPython'):
+    if 'wx' in sys.modules or 'wxPython' in sys.modules:
         raise AlreadyImportedError("wxversion.ensureMinimal() must be called before wxPython is imported")
 
     bestMatch = None
@@ -322,7 +322,7 @@ def _find_installed(removeExisting=False):
         phoenix_version_py = os.path.join(name, '__version__.py')
         if os.path.isfile(phoenix_version_py):
             version_info = {}
-            execfile(phoenix_version_py, {}, version_info)
+            exec(compile(open(phoenix_version_py, "rb").read(), phoenix_version_py, 'exec'), {}, version_info)
             if version_info['VERSION'] >= (4, ):
                 pinfo = _wxPackageInfo("%s-%s" % (name,
                                                   version_info['VERSION_STRING']),
@@ -450,7 +450,7 @@ if __name__ == '__main__':
 
         #test
         select(version, optionsRequired)
-        print "Asked for %s, (%s):\t got: %s" % (version, optionsRequired, sys.path[0])
+        print("Asked for %s, (%s):\t got: %s" % (version, optionsRequired, sys.path[0]))
 
         # reset
         sys.path = savepath[:]
@@ -464,7 +464,7 @@ if __name__ == '__main__':
 
         #test
         ensureMinimal(version, optionsRequired)
-        print "EM: Asked for %s, (%s):\t got: %s" % (version, optionsRequired, sys.path[0])
+        print("EM: Asked for %s, (%s):\t got: %s" % (version, optionsRequired, sys.path[0]))
 
         # reset
         sys.path = savepath[:]
@@ -492,12 +492,12 @@ if __name__ == '__main__':
 
     # now run some tests
     pprint.pprint( getInstalled())
-    print checkInstalled("2.4")
-    print checkInstalled("2.5-unicode")
-    print checkInstalled("2.99-bogus")
-    print "Current sys.path:"
+    print(checkInstalled("2.4"))
+    print(checkInstalled("2.5-unicode"))
+    print(checkInstalled("2.99-bogus"))
+    print("Current sys.path:")
     pprint.pprint(sys.path)
-    print
+    print()
     
     test("2.4")
     test("2.5")
@@ -523,15 +523,15 @@ if __name__ == '__main__':
     try:
         # expecting an error on this one
         test("2.9")
-    except VersionError, e:
-        print "Asked for 2.9:\t got Exception:", e 
+    except VersionError as e:
+        print("Asked for 2.9:\t got Exception:", e) 
 
     # check for exception when incompatible versions are requested
     try:
         select("2.4")
         select("2.5")
-    except VersionError, e:
-        print "Asked for incompatible versions, got Exception:", e 
+    except VersionError as e:
+        print("Asked for incompatible versions, got Exception:", e) 
 
     _EM_DEBUG=1
     testEM("2.6")
@@ -539,8 +539,8 @@ if __name__ == '__main__':
     testEM("2.6-unicode", True)
     try:
         testEM("2.9")
-    except VersionError, e:
-        print "EM: Asked for 2.9:\t got Exception:", e 
+    except VersionError as e:
+        print("EM: Asked for 2.9:\t got Exception:", e) 
 
     # cleanup
     for name in names:

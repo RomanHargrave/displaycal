@@ -31,7 +31,7 @@ if sys.platform == "win32":
 				fo.DeleteItem(item)
 				success = fo.PerformOperations() is None
 				aborted = fo.GetAnyOperationsAborted()
-			except pythoncom.com_error, exception:
+			except pythoncom.com_error as exception:
 				raise TrashAborted(-1)
 		else:
 			# XP
@@ -45,7 +45,7 @@ if sys.platform == "win32":
 		return success and not aborted
 else:
 	from time import strftime
-	from urllib import quote
+	from urllib.parse import quote
 	import shutil
 
 from util_os import getenvu, expanduseru
@@ -65,7 +65,7 @@ def trash(paths):
 	Return a list of successfully processed paths.
 	
 	"""
-	if isinstance(paths, (str, unicode)):
+	if isinstance(paths, str):
 		paths = [paths]
 	if not isinstance(paths, list):
 		raise TypeError(str(type(paths)) + " is not list")

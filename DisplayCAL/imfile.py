@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import math
 import os
 import struct
@@ -94,10 +94,10 @@ def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
 
 def write_rgb_clut(stream_or_filename, clutres=33, bitdepth=16, format=None):
 	clut = []
-	for R in xrange(clutres):
-		for G in xrange(clutres):
+	for R in range(clutres):
+		for G in range(clutres):
 			clut.append([])
-			for B in xrange(clutres):
+			for B in range(clutres):
 					RGB = [v * (1.0 / (clutres - 1)) for v in (R, G, B)]
 					clut[-1].append([v * (2 ** bitdepth - 1) for v in RGB])
 	write(clut, stream_or_filename, bitdepth, format)
@@ -383,7 +383,7 @@ class Image(object):
 
 	def write(self, stream_or_filename, format=None, dimensions=None):
 		if not format:
-			if isinstance(stream_or_filename, basestring):
+			if isinstance(stream_or_filename, str):
 				format = os.path.splitext(stream_or_filename)[1].lstrip(".").upper()
 				if format == "TIF":
 					format += "F"
@@ -391,7 +391,7 @@ class Image(object):
 				format = "PNG"
 		if not hasattr(self, "_write_" + format.lower()):
 			raise ValueError("Unsupported format: %r" % format)
-		if isinstance(stream_or_filename, basestring):
+		if isinstance(stream_or_filename, str):
 			stream = open(stream_or_filename, "wb")
 		else:
 			stream = stream_or_filename

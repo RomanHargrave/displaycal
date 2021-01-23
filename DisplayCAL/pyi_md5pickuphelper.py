@@ -9,7 +9,7 @@ if platform not in ("darwin", "win32"):
 		_md5 = None
 try:
 	from hashlib import md5
-except ImportError, exception:
+except ImportError as exception:
 	if platform not in ("darwin", "win32") and _md5:
 		md5 = _md5
 	else:

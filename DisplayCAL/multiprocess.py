@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Queue import Empty
+from queue import Empty
 import atexit
 import errno
 import logging
@@ -24,7 +24,7 @@ def cpu_count(limit_by_total_vmem=True):
 	Return fallback value of 1 if CPU count cannot be determined.
 	
 	"""
-	max_cpus = sys.maxint
+	max_cpus = sys.maxsize
 	if limit_by_total_vmem:
 		try:
 			import psutil
@@ -138,8 +138,8 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	pool = Pool(num_workers)
 	results = []
 	start = 0
-	for batch in xrange(num_batches):
-		for i in xrange(batch * num_workers, (batch + 1) * num_workers):
+	for batch in range(num_batches):
+		for i in range(batch * num_workers, (batch + 1) * num_workers):
 			end = int(math.ceil(chunksize * (i + 1)))
 			results.append(pool.apply_async(WorkerFunc(func,
 													   batch == num_batches - 1),
@@ -187,7 +187,7 @@ class WorkerFunc(object):
 		try:
 			return self.func(data, thread_abort_event, progress_queue, *args,
 							 **kwds)
-		except Exception, exception:
+		except Exception as exception:
 			if (not getattr(sys, "_sigbreak", False) or
 				not isinstance(exception, IOError) or
 				exception.args[0] != errno.EPIPE):
@@ -206,12 +206,12 @@ class WorkerFunc(object):
 					# have fork().
 					for func, targs, kargs in atexit._exithandlers:
 						# Find our lockfile removal exit handler
-						if (targs and isinstance(targs[0], basestring) and
+						if (targs and isinstance(targs[0], str) and
 							targs[0].endswith(".lock")):
 							safe_log("Removing lockfile", targs[0])
 							try:
 								func(*targs, **kargs)
-							except Exception, exception:
+							except Exception as exception:
 								safe_log("Could not remove lockfile:",
 										 exception)
 					# Logging is normally shutdown by atexit, as well. Do

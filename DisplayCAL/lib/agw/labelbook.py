@@ -711,7 +711,7 @@ class ImageContainerBase(wx.Panel):
             if self._pinBtnRect.Contains(pt):
                 return -1, IMG_OVER_PIN        
 
-        for i in xrange(len(self._pagesInfoVec)):
+        for i in range(len(self._pagesInfoVec)):
         
             if self._pagesInfoVec[i].GetPosition() == wx.Point(-1, -1):
                 break
@@ -1164,7 +1164,7 @@ class ImageContainer(ImageContainerBase):
 
         count = 0
         
-        for i in xrange(len(self._pagesInfoVec)):
+        for i in range(len(self._pagesInfoVec)):
 
             count = count + 1            
         
@@ -1325,7 +1325,7 @@ class ImageContainer(ImageContainerBase):
             pos += rectWidth
         
         # Update all buttons that can not fit into the screen as non-visible
-        for ii in xrange(count, len(self._pagesInfoVec)):
+        for ii in range(count, len(self._pagesInfoVec)):
             self._pagesInfoVec[ii].SetPosition(wx.Point(-1, -1))
 
         # Draw the pin button
@@ -1526,7 +1526,7 @@ class LabelContainer(ImageContainerBase):
         posy = 20 
         count = 0
         
-        for i in xrange(len(self._pagesInfoVec)):
+        for i in range(len(self._pagesInfoVec)):
             count = count+1        
             # Default values for the surronounding rectangle 
             # around a button
@@ -1565,7 +1565,7 @@ class LabelContainer(ImageContainerBase):
             posy += rectHeight
         
         # Update all buttons that can not fit into the screen as non-visible
-        for ii in xrange(count, len(self._pagesInfoVec)):
+        for ii in range(count, len(self._pagesInfoVec)):
             self._pagesInfoVec[i].SetPosition(wx.Point(-1, -1))
 
         if bUsePin:
@@ -1885,7 +1885,7 @@ class LabelContainer(ImageContainerBase):
         :see: L{SetColour} for a list of valid colour keys.
         """
 
-        if not self._coloursMap.has_key(which):
+        if which not in self._coloursMap:
             return wx.Colour()
 
         return self._coloursMap[which]        
@@ -2389,7 +2389,7 @@ class FlatBookBase(wx.Panel):
             dc.SetFont(font)
             maxW = 0
             
-            for page in xrange(self.GetPageCount()):
+            for page in range(self.GetPageCount()):
                 caption = self._pages.GetPageText(page)
                 w, h = dc.GetTextExtent(caption)
                 maxW = max(maxW, w)

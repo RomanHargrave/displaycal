@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import __builtin__
+import builtins
 import locale
 import os
 import re
@@ -29,8 +29,8 @@ def init(set_wx_locale=False):
 		if os.path.exists(langdir) and os.path.isdir(langdir):
 			try:
 				langfiles = os.listdir(langdir)
-			except Exception, exception:
-				safe_print(u"Warning - directory '%s' listing failed: %s" % 
+			except Exception as exception:
+				safe_print("Warning - directory '%s' listing failed: %s" % 
 						   tuple(safe_unicode(s) for s in (langdir, exception)))
 			else:
 				for filename in langfiles:
@@ -114,7 +114,7 @@ def getstr(id_str, strvars=None, lcode=None, default=None):
 				lstr %= tuple(strvars)
 		return lstr
 	else:
-		if (debug and id_str and not isinstance(id_str, unicode) and
+		if (debug and id_str and not isinstance(id_str, str) and
 			not " " in id_str):
 			usage[id_str] = 0
 		return default or id_str

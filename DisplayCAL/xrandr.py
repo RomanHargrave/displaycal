@@ -42,7 +42,7 @@ try:
 										  POINTER(c_ulong), POINTER(c_int), 
 										  POINTER(c_ulong), POINTER(c_ulong), 
 										  POINTER(POINTER(c_ubyte))]
-except AttributeError, exception:
+except AttributeError as exception:
 	raise ImportError("libX11: %s" % exception)
 
 try:
@@ -52,7 +52,7 @@ try:
 											   POINTER(c_ulong), POINTER(c_int), 
 											   POINTER(c_ulong), POINTER(c_ulong), 
 											   POINTER(POINTER(c_ubyte))]
-except AttributeError, exception:
+except AttributeError as exception:
 	raise ImportError("libXrandr: %s" % exception)
 
 
@@ -104,11 +104,11 @@ class XDisplay(object):
 									 ret_type, ret_format, ret_len, ret_togo,
 									 atomv) == 0 and ret_len.value > 0:
 			if debug:
-				print "ret_type:", ret_type.value
-				print "ret_format:", ret_format.value
-				print "ret_len:", ret_len.value
-				print "ret_togo:", ret_togo.value
-			property = [atomv[i] for i in xrange(ret_len.value)]
+				print("ret_type:", ret_type.value)
+				print("ret_format:", ret_format.value)
+				print("ret_len:", ret_len.value)
+				print("ret_togo:", ret_togo.value)
+			property = [atomv[i] for i in range(ret_len.value)]
 		
 		return property
 
@@ -130,11 +130,11 @@ class XDisplay(object):
 										   ret_len, ret_togo, atomv) == 0 and
 			ret_len.value > 0):
 			if debug:
-				print "ret_type:", ret_type.value
-				print "ret_format:", ret_format.value
-				print "ret_len:", ret_len.value
-				print "ret_togo:", ret_togo.value
-			property = [atomv[i] for i in xrange(ret_len.value)]
+				print("ret_type:", ret_type.value)
+				print("ret_format:", ret_format.value)
+				print("ret_len:", ret_len.value)
+				print("ret_togo:", ret_togo.value)
+			property = [atomv[i] for i in range(ret_len.value)]
 
 		return property
 
@@ -143,4 +143,4 @@ if __name__ == "__main__":
 	with XDisplay() as display:
 		property = display.get_output_property(int(sys.argv[1]), sys.argv[2],
 											   int(sys.argv[3]))
-		print "%s for display %s: %r" % (sys.argv[2], sys.argv[1], property)
+		print("%s for display %s: %r" % (sys.argv[2], sys.argv[1], property))

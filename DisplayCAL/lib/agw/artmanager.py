@@ -4,7 +4,7 @@ L{LabelBook} and L{FlatMenu}.
 """
 
 import wx
-import cStringIO
+import io
 import random
 
 from fmresources import *
@@ -461,7 +461,7 @@ class RendererMSOffice2007(RendererBase):
 
         # Define the rounded rectangle base on the given rect
         # we need an array of 9 points for it
-        regPts = [wx.Point() for ii in xrange(9)]
+        regPts = [wx.Point() for ii in range(9)]
         radius = 2
         
         regPts[0] = wx.Point(rect.x, rect.y + radius)
@@ -485,7 +485,7 @@ class RendererMSOffice2007(RendererBase):
         rightPt2 = wx.Point(rect.x + rect.width, rect.y + (rect.height / factor)*(factor-1))
 
         # Define the top region
-        topReg = [wx.Point() for ii in xrange(7)]
+        topReg = [wx.Point() for ii in range(7)]
         topReg[0] = regPts[0]
         topReg[1] = regPts[1]
         topReg[2] = wx.Point(regPts[2].x+1, regPts[2].y)
@@ -667,13 +667,13 @@ class ArtManager(wx.EvtHandler):
             img = img.ConvertToImage()
             x, y = img.GetWidth(), img.GetHeight()
             img.InitAlpha()
-            for jj in xrange(y):
-                for ii in xrange(x):
+            for jj in range(y):
+                for ii in range(x):
                     img.SetAlpha(ii, jj, alpha[jj*x+ii])
                     
         else:
 
-            stream = cStringIO.StringIO(xpm)
+            stream = io.StringIO(xpm)
             img = wx.ImageFromStream(stream)
             
         return wx.BitmapFromImage(img)
@@ -719,7 +719,7 @@ class ArtManager(wx.EvtHandler):
          Othewise, `wx.NullBitmap` is returned.
         """
 
-        if self._bitmaps.has_key(name):
+        if name in self._bitmaps:
             return self._bitmaps[name]
 
         return wx.NullBitmap
@@ -953,7 +953,7 @@ class ArtManager(wx.EvtHandler):
         bstep = float(col2.Blue() - col1.Blue())/float(size)
         
         # draw the upper triangle
-        for i in xrange(size):
+        for i in range(size):
         
             currCol = wx.Colour(col1.Red() + rf, col1.Green() + gf, col1.Blue() + bf)
             dc.SetBrush(wx.Brush(currCol, wx.SOLID))
@@ -989,7 +989,7 @@ class ArtManager(wx.EvtHandler):
             bf += bstep/2
         
         # draw the lower triangle
-        for i in xrange(size):
+        for i in range(size):
 
             currCol = wx.Colour(col1.Red() + rf, col1.Green() + gf, col1.Blue() + bf)        
             dc.SetBrush(wx.Brush(currCol, wx.SOLID))
@@ -1150,7 +1150,7 @@ class ArtManager(wx.EvtHandler):
         w, h = dc.GetTextExtent(suffix)
         rectSize -= w
 
-        for i in xrange(textLen, -1, -1):
+        for i in range(textLen, -1, -1):
         
             textW, textH = dc.GetTextExtent(tempText)
             if rectSize >= textW:
@@ -1268,9 +1268,9 @@ class ArtManager(wx.EvtHandler):
                 winxpgui.SetLayeredWindowAttributes(hwnd, 0, amount, 2)
     
             elif _libimported == "ctypes":
-                style = self._winlib.GetWindowLongA(hwnd, 0xffffffecL)
+                style = self._winlib.GetWindowLongA(hwnd, 0xffffffec)
                 style |= 0x00080000
-                self._winlib.SetWindowLongA(hwnd, 0xffffffecL, style)
+                self._winlib.SetWindowLongA(hwnd, 0xffffffec, style)
                 self._winlib.SetLayeredWindowAttributes(hwnd, 0, amount, 2)                
         else:
             if not wnd.CanSetTransparent():
@@ -1917,7 +1917,7 @@ class ArtManager(wx.EvtHandler):
 
         self._menuBarColourScheme = scheme
         # set default colour
-        if scheme in self._colourSchemeMap.keys():
+        if scheme in list(self._colourSchemeMap.keys()):
             self._menuBarBgColour = self._colourSchemeMap[scheme]
 
 
@@ -1951,7 +1951,7 @@ class ArtManager(wx.EvtHandler):
     def GetColourSchemes(self):
         """ Returns the available colour schemes. """
 
-        return self._colourSchemeMap.keys()     
+        return list(self._colourSchemeMap.keys())     
                 
 
     def CreateGreyBitmap(self, bmp):

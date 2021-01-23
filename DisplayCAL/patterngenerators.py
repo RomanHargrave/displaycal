@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from SocketServer import TCPServer
+from socketserver import TCPServer
 from socket import (AF_INET, SHUT_RDWR, SO_BROADCAST, SO_REUSEADDR, SOCK_DGRAM,
 					SOCK_STREAM, SOL_SOCKET, error, gethostname, gethostbyname,
 					socket, timeout)
 from time import sleep
 import errno
-import httplib
+import http.client
 import json
 import select
 import struct
 import sys
 import threading
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 import localization as lang
 from log import safe_print
@@ -45,7 +45,7 @@ def _shutdown(sock, addr):
 		# Will fail if the socket isn't connected, i.e. if there
 		# was an error during the call to connect()
 		sock.shutdown(SHUT_RDWR)
-	except error, exception:
+	except error as exception:
 		if exception.errno != errno.ENOTCONN:
 			safe_print("PatternGenerator: SHUT_RDWR for %s:%i failed:" %
 					   addr[:2], exception)
@@ -74,13 +74,13 @@ class GenHTTPPatternGeneratorClient(object):
 		try:
 			self.conn.request(method, url, params, headers or {})
 			resp = self.conn.getresponse()
-		except (error, httplib.HTTPException), exception:
+		except (error, http.client.HTTPException) as exception:
 			raise
 		else:
-			if resp.status == httplib.OK:
+			if resp.status == http.client.OK:
 				return self._validate(resp, url, validate)
 			else:
-				raise httplib.HTTPException("%s %s" % (resp.status, resp.reason))
+				raise http.client.HTTPException("%s %s" % (resp.status, resp.reason))
 
 	def _shutdown(self):
 		# Override this method in subclass!
@@ -92,10 +92,10 @@ class GenHTTPPatternGeneratorClient(object):
 
 	def connect(self):
 		self.ip = gethostbyname(self.host)
-		self.conn = httplib.HTTPConnection(self.ip, self.port)
+		self.conn = http.client.HTTPConnection(self.ip, self.port)
 		try:
 			self.conn.connect()
-		except (error, httplib.HTTPException):
+		except (error, http.client.HTTPException):
 			del self.conn
 			raise
 
@@ -179,7 +179,7 @@ class GenTCPSockPatternGeneratorServer(object):
 		if hasattr(self, "conn"):
 			try:
 				self.conn.shutdown(SHUT_RDWR)
-			except error, exception:
+			except error as exception:
 				if exception.errno != errno.ENOTCONN:
 					safe_print("Warning - could not shutdown pattern generator "
 							   "connection:", exception)
@@ -236,7 +236,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 									  args=(sock, self.broadcast_ip, port))
 			self._threads.append(thread)
 			thread.start()
-		except error, exception:
+		except error as exception:
 			safe_print("PrismaPatternGeneratorClient: UDP Port %i: %s" %
 					   (port, exception))
 
@@ -249,11 +249,11 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		while getattr(self, "listening", False):
 			try:
 				data, addr = sock.recvfrom(4096)
-			except timeout, exception:
+			except timeout as exception:
 				safe_print("PrismaPatternGeneratorClient: In receiver thread for %s port %i:" %
 						   (cast, port), exception)
 				continue
-			except error, exception:
+			except error as exception:
 				if exception.errno == errno.EWOULDBLOCK:
 					sleep(.05)
 					continue
@@ -341,7 +341,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		if method:
 			url += "?m=" + method
 			if params:
-				url += "&" + urllib.unquote_plus(urllib.urlencode(params))
+				url += "&" + urllib.parse.unquote_plus(urllib.parse.urlencode(params))
 		if not validate:
 			validate = {method: "Ok"}
 		return self._request("GET", url, validate=validate)
@@ -356,25 +356,25 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		raw = resp.read()
 		if isinstance(validate, dict):
 			data = json.loads(raw)
-			components = urlparse.urlparse(url)
+			components = urllib.parse.urlparse(url)
 			api = components.path[1:]
-			query = urlparse.parse_qs(components.query)
+			query = urllib.parse.parse_qs(components.query)
 			if "m" in query:
 				method = query["m"][0]
 				if data.get(method) == "Error" and "msg" in data:
-					raise httplib.HTTPException("%s: %s" % (self.host, data["msg"]))
-			for key, value in validate.iteritems():
+					raise http.client.HTTPException("%s: %s" % (self.host, data["msg"]))
+			for key, value in validate.items():
 				if key not in data:
-					raise httplib.HTTPException(lang.getstr("response.invalid.missing_key",
+					raise http.client.HTTPException(lang.getstr("response.invalid.missing_key",
 												(self.host, key, raw)))
 				elif value is not None and data[key] != value:
-					raise httplib.HTTPException(lang.getstr("response.invalid.value",
+					raise http.client.HTTPException(lang.getstr("response.invalid.value",
 												(self.host, key, value, raw)))
 			data["raw"] = raw
 			return data
 		elif validate:
 			if raw != validate:
-				raise httplib.HTTPException(lang.getstr("response.invalid",
+				raise http.client.HTTPException(lang.getstr("response.invalid",
 											(self.host, raw)))
 		return raw
 
@@ -529,7 +529,7 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 									   poll_interval)
 				if self in r:
 					self._handle_request_noblock()
-		except Exception, exception:
+		except Exception as exception:
 			safe_print("Exception in WebWinHTTPPatternGeneratorServer.serve_forever:",
 					   exception)
 			self._listening.clear()

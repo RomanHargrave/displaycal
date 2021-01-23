@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import csv
 import math
 import os
@@ -44,7 +44,7 @@ from wxMeasureFrame import get_default_size
 
 
 def swap_dict_keys_values(mydict):
-	return dict([(v, k) for (k, v) in mydict.iteritems()])
+	return dict([(v, k) for (k, v) in mydict.items()])
 
 
 class TestchartEditor(BaseFrame):
@@ -201,7 +201,7 @@ class TestchartEditor(BaseFrame):
 		sizer.Add(self.tc_fullspread_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		# algo
-		algos = self.tc_algos_ab.values()
+		algos = list(self.tc_algos_ab.values())
 		algos.sort()
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.algo")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
 		self.tc_algo = wx.Choice(panel, -1, choices = algos, name = "tc_algo")
@@ -767,7 +767,7 @@ class TestchartEditor(BaseFrame):
 						if v > maxval:
 							maxval = v
 					rows.append(row)
-		except Exception, exception:
+		except Exception as exception:
 			result = exception
 		else:
 			# Scale to 0..100 if actual value range is different
@@ -850,7 +850,7 @@ END_DATA""")
 		grid_w = self.grid.GetSize()[0] - self.grid.GetRowLabelSize() - self.grid.GetDefaultRowSize()
 		col_w = round(grid_w / (num_cols - 1))
 		last_col_w = grid_w - col_w * (num_cols - 2)
-		for i in xrange(num_cols):
+		for i in range(num_cols):
 			if i == 3:
 				w = self.grid.GetDefaultRowSize()
 			elif i == num_cols - 2:
@@ -869,7 +869,7 @@ END_DATA""")
 					  self.preview.GetRowLabelSize() -
 					  wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
 			col_w = round(grid_w / num_cols)
-			for i in xrange(num_cols):
+			for i in range(num_cols):
 				self.preview.SetColSize(i, col_w)
 			self.preview.SetMargins(0 - wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 								    0)
@@ -1055,10 +1055,10 @@ END_DATA""")
 				raise ValueError("RGB value %r%% is invalid" % value)
 			elif value < 0:
 				raise ValueError("Negative RGB value %r%% is invalid" % value)
-		except ValueError, exception:
+		except ValueError as exception:
 			if not self.grid.GetBatchCount():
 				wx.Bell()
-			if label in self.ti1[0]["DATA_FORMAT"].values():
+			if label in list(self.ti1[0]["DATA_FORMAT"].values()):
 				strval = str(sample[label])
 				if "." in strval:
 					strval = strval.rstrip("0").rstrip(".")
@@ -1325,7 +1325,7 @@ END_DATA""")
 	def tc_add_saturation_sweeps_handler(self, event):
 		try:
 			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
-		except (IOError, ICCP.ICCProfileInvalidError), exception:
+		except (IOError, ICCP.ICCProfileInvalidError) as exception:
 			show_result_dialog(exception, self)
 		else:
 			rgb_space = profile.get_rgb_space()
@@ -1352,7 +1352,7 @@ END_DATA""")
 				row = rows[-1]
 			else:
 				row = self.grid.GetNumberRows() - 1
-			for i in xrange(maxv):
+			for i in range(maxv):
 				saturation = 1.0 / (maxv - 1) * i
 				RGB, xyY = colormath.RGBsaturation(R, G, B, 1.0 / (maxv - 1) * i,
 												   rgb_space)
@@ -1380,7 +1380,7 @@ END_DATA""")
 	def tc_add_ti3_handler(self, event, chart=None):
 		try:
 			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
-		except (IOError, ICCP.ICCProfileInvalidError), exception:
+		except (IOError, ICCP.ICCProfileInvalidError) as exception:
 			show_result_dialog(exception, self)
 			return
 
@@ -1411,7 +1411,7 @@ END_DATA""")
 				img = wx.Image(chart, wx.BITMAP_TYPE_ANY)
 				if not img.IsOk():
 					raise Error(lang.getstr("error.file_type_unsupported"))
-			except Exception, exception:
+			except Exception as exception:
 				show_result_dialog(exception, self)
 				return
 			finally:
@@ -1436,7 +1436,7 @@ END_DATA""")
 						not isinstance(nclprof.tags.ncl2, ICCP.NamedColor2Type) or
 						nclprof.connectionColorSpace not in ("Lab", "XYZ")):
 						raise Error(lang.getstr("profile.only_named_color"))
-				except Exception, exception:
+				except Exception as exception:
 					show_result_dialog(exception, self)
 					return
 				if nclprof.connectionColorSpace == "Lab":
@@ -1453,8 +1453,8 @@ END_DATA""")
 					chart.insert(1, 'KEYWORD "APPROX_WHITE_POINT"')
 					chart.insert(2, 'APPROX_WHITE_POINT "%.4f %.4f %.4f"' %
 									tuple(v * 100 for v in
-										  nclprof.tags.wtpt.ir.values()))
-				for k, v in nclprof.tags.ncl2.iteritems():
+										  list(nclprof.tags.wtpt.ir.values())))
+				for k, v in nclprof.tags.ncl2.items():
 					chart.insert(-1, "%.4f %.4f %.4f" % tuple(v.pcs.values()))
 				chart = "\n".join(chart)
 
@@ -1470,7 +1470,7 @@ END_DATA""")
 			show_result_dialog(result, self)
 		else:
 			chart = result
-			data_format = chart.queryv1("DATA_FORMAT").values()
+			data_format = list(chart.queryv1("DATA_FORMAT").values())
 			if getcfg("tc_add_ti3_relative"):
 				intent = "r"
 			else:
@@ -1495,7 +1495,7 @@ END_DATA""")
 				else:
 					chart = ti3
 			dataset = chart.queryi1("DATA")
-			data_format = dataset.queryv1("DATA_FORMAT").values()
+			data_format = list(dataset.queryv1("DATA_FORMAT").values())
 			# Returned CIE values are always either XYZ or Lab
 			if ("LAB_L" in data_format and "LAB_A" in data_format and
 				"LAB_B" in data_format):
@@ -1525,7 +1525,7 @@ END_DATA""")
 													dataset.DATA[i]["XYZ_Y"],
 													dataset.DATA[i]["XYZ_Z"],
 													"D50",
-													profile.tags.wtpt.values())
+													list(profile.tags.wtpt.values()))
 				entry = {"SAMPLE_ID": row + 2 + i}
 				for label in ("RGB_R", "RGB_G", "RGB_B",
 							  "XYZ_X", "XYZ_Y", "XYZ_Z"):
@@ -1575,7 +1575,7 @@ END_DATA""")
 			if cmd:
 				ppath = getcfg("tc_precond_profile")
 				intent = "r" if getcfg("tc_add_ti3_relative") else "a"
-				for n in xrange(2 if ppath else 1):
+				for n in range(2 if ppath else 1):
 					if use_gamut:
 						res = 10 if imgpath == chart else 1
 						args = ["-d%s" % res, "-O", gam]
@@ -1645,7 +1645,7 @@ END_DATA""")
 					img = wx.Image(chart, wx.BITMAP_TYPE_ANY)
 					if not img.IsOk():
 						raise Error(lang.getstr("error.file_type_unsupported"))
-				except Exception, exception:
+				except Exception as exception:
 					return exception
 				finally:
 					wx.Log.SetLogLevel(llevel)
@@ -1659,8 +1659,8 @@ END_DATA""")
 						 "END_DATA_FORMAT",
 						 "BEGIN_DATA",
 						 "END_DATA"]
-				for y in xrange(h):
-					for x in xrange(w):
+				for y in range(h):
+					for x in range(w):
 						R, G, B = (img.GetRed(x, y) / 2.55,
 								   img.GetGreen(x, y) / 2.55,
 								   img.GetBlue(x, y) / 2.55)
@@ -1673,7 +1673,7 @@ END_DATA""")
 				raise CGATS.CGATSError(lang.getstr("error.testchart.missing_fields",
 												   (chart.filename,
 													"DATA_FORMAT")))
-		except (IOError, CGATS.CGATSError), exception:
+		except (IOError, CGATS.CGATSError) as exception:
 			return exception
 		finally:
 			path = None
@@ -1695,7 +1695,7 @@ END_DATA""")
 															   intent=intent,
 															   white_patches=False,
 															   raise_exceptions=True)
-				except Exception, exception:
+				except Exception as exception:
 					return exception
 				if ti3:
 					chart = ti3
@@ -1707,7 +1707,7 @@ END_DATA""")
 			demph = getcfg("tc_dark_emphasis")
 			# Select Lab color
 			data = chart.queryv1("DATA")
-			for sample in data.itervalues():
+			for sample in data.values():
 				if not use_gamut:
 					RGB = sample["RGB_R"],  sample["RGB_G"], sample["RGB_B"]
 				L, a, b = (sample["LAB_L"],
@@ -1734,9 +1734,8 @@ END_DATA""")
 					 "END_DATA_FORMAT",
 					 "BEGIN_DATA",
 					 "END_DATA"]
-			weight = bool(filter(lambda color: weights[color] >= threshold,
-								 colorsets.iterkeys()))
-			for color, colors in colorsets.iteritems():
+			weight = bool([color for color in iter(colorsets.keys()) if weights[color] >= threshold])
+			for color, colors in colorsets.items():
 				if weight and weights[color] < threshold:
 					continue
 				L, a, b = 0, 0, 0
@@ -1992,9 +1991,9 @@ END_DATA""")
 			self.preview.AppendRows(neededrows)
 		while True:
 			if row == startrow:
-				cols = xrange(startcol, numcols)
+				cols = range(startcol, numcols)
 			else:
-				cols = xrange(numcols)
+				cols = range(numcols)
 			for col in cols:
 				if startindex + i < self.grid.GetNumberRows():
 					color = self.grid.GetCellBackgroundColour(startindex + i, 3)
@@ -2096,7 +2095,7 @@ END_DATA""")
 								  value=str(getcfg("tc_export_repeat_patch_max")))
 			sizer.Add(intctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 					  border=4)
-			sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
+			sizer.Add(wx.StaticText(dlg, -1, "× " + lang.getstr("max")), 0,
 									flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 									border=12)
 			intctrl2 = wx.SpinCtrl(dlg, -1, size=(60 * scale, -1),
@@ -2105,7 +2104,7 @@ END_DATA""")
 								   value=str(getcfg("tc_export_repeat_patch_min")))
 			sizer.Add(intctrl2, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 					  border=4)
-			sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("min")), 0,
+			sizer.Add(wx.StaticText(dlg, -1, "× " + lang.getstr("min")), 0,
 									flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 									border=12)
 			dlg.sizer0.SetSizeHints(dlg)
@@ -2190,7 +2189,7 @@ END_DATA""")
 					  7: 1023}[filter_index]
 		is_winnt6 = sys.platform == "win32" and sys.getwindowsversion() >= (6, )
 		use_winnt6_symlinks = is_winnt6 and is_superuser()
-		for i in xrange(maxlen):
+		for i in range(maxlen):
 			if self.worker.thread_abort:
 				break
 			self.worker.lastmsg.write("%d%%\n" % (100.0 / maxlen * (i + 1)))
@@ -2237,7 +2236,7 @@ END_DATA""")
 					count += repeat - 1
 					secs += repeat - 1
 					continue
-				for j in xrange(repeat - 1):
+				for j in range(repeat - 1):
 					count += 1
 					filecopyname = filenameformat % (name, count, ext)
 					if format == "DPX":
@@ -2321,8 +2320,8 @@ END_DATA""")
 					# segfault under Arch Linux when setting the window title
 					safe_print("")
 					self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(path))
-			except Exception, exception:
-				handle_error(Error(u"Error - testchart could not be saved: " +
+			except Exception as exception:
+				handle_error(Error("Error - testchart could not be saved: " +
 								   safe_unicode(exception)), parent=self)
 			else:
 				if self.Parent:
@@ -2449,8 +2448,8 @@ END_DATA""")
 										  normalize_RGB_white=getcfg("tc_vrml_use_D50"),
 										  compress=formatext == ".wrz",
 										  format=view_3d_format)
-				except Exception, exception:
-					handle_error(UserWarning(u"Warning - 3D file could not be "
+				except Exception as exception:
+					handle_error(UserWarning("Warning - 3D file could not be "
 											 "saved: " +
 											 safe_unicode(exception)),
 								 parent=self)
@@ -2584,7 +2583,7 @@ END_DATA""")
 			ti1.fix_device_values_scaling()
 			try:
 				ti1_1 = verify_cgats(ti1, ("RGB_R", "RGB_B", "RGB_G"))
-			except CGATS.CGATSError, exception:
+			except CGATS.CGATSError as exception:
 				msg = {CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
 														(path, 
 														 "RGB_R, RGB_G, RGB_B"))}.get(exception.__class__,
@@ -2600,7 +2599,7 @@ END_DATA""")
 					# Missing XYZ, add via simple sRGB-like model
 					data = ti1_1.queryv1("DATA")
 					data.parent.DATA_FORMAT.add_data(("XYZ_X", "XYZ_Y", "XYZ_Z"))
-					for sample in data.itervalues():
+					for sample in data.values():
 						XYZ = argyll_RGB2XYZ(*[sample["RGB_" + channel] / 100.0
 											   for channel in "RGB"])
 						for i, component in enumerate("XYZ"):
@@ -2610,7 +2609,7 @@ END_DATA""")
 						ti1_1.add_keyword("ACCURATE_EXPECTED_VALUES", "true")
 				ti1.root.setmodified(False)
 				self.ti1 = ti1
-		except Exception, exception:
+		except Exception as exception:
 			return Error(lang.getstr("error.testchart.read", path) + "\n\n" +
 						 safe_unicode(exception))
 
@@ -2940,7 +2939,7 @@ END_DATA""")
 
 			algo = None
 
-			for key in fullspread_ba.keys():
+			for key in list(fullspread_ba.keys()):
 				if self.ti1.queryv1(key) > 0:
 					algo = fullspread_ba[key]
 					break
@@ -2972,7 +2971,7 @@ END_DATA""")
 		channel.sort()
 		increments = {"0": 0}
 		for i, v in enumerate(channel):
-			for j in reversed(xrange(i, len(channel))):
+			for j in reversed(range(i, len(channel))):
 				inc = round(float(str(channel[j] - v)), vmaxlen)
 				if inc > 0:
 					inc = str(inc)
@@ -3069,7 +3068,7 @@ END_DATA""")
 					# Collect all fixed point datasets not in data
 					fixed_data.vmaxlen = data.vmaxlen
 					fixed_datasets = []
-					for i, dataset in fixed_data.iteritems():
+					for i, dataset in fixed_data.items():
 						if not str(dataset) in rgbdata:
 							fixed_datasets.append(dataset)
 					if fixed_datasets:
@@ -3101,8 +3100,8 @@ END_DATA""")
 					try:
 						result = CGATS.CGATS(path)
 						safe_print(lang.getstr("success"))
-					except Exception, exception:
-						result = Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
+					except Exception as exception:
+						result = Error("Error - testchart file could not be read: " + safe_unicode(exception))
 					else:
 						result.filename = None
 		self.worker.wrapup(False)
@@ -3138,7 +3137,7 @@ END_DATA""")
 				numcols = (self.sizer.Size[0] -
 						   wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)) / w
 				self.preview.AppendCols(numcols)
-				for i in xrange(numcols):
+				for i in range(numcols):
 					self.preview.SetColLabelValue(i, str(i + 1))
 
 			grid = self.grid
@@ -3198,9 +3197,9 @@ END_DATA""")
 			self.preview.BeginBatch()
 		data_format = self.ti1.queryv1("DATA_FORMAT")
 		data.moveby1(row + 1, len(newdata))
-		for i in xrange(len(newdata)):
+		for i in range(len(newdata)):
 			dataset = CGATS.CGATS()
-			for label in data_format.itervalues():
+			for label in data_format.values():
 				if not label in newdata[i]:
 					newdata[i][label] = 0.0
 				dataset[label] = newdata[i][label]
@@ -3371,7 +3370,7 @@ END_DATA""")
 				index = self.grid.GetGridCursorRow()
 				if index > -1:
 					colour = self.grid.GetCellBackgroundColour(index, 3)
-					patchinfo = u" \u2014 %s %s: R=%s G=%s B=%s" % (lang.getstr("tc.patch"),
+					patchinfo = " \u2014 %s %s: R=%s G=%s B=%s" % (lang.getstr("tc.patch"),
 																	index + 1, colour[0],
 																	colour[1], colour[2])
 					statustxt += patchinfo

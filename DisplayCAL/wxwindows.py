@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 from datetime import datetime
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 htmlparser = HTMLParser()
 from time import gmtime, sleep, strftime, time
 import errno
@@ -75,7 +75,7 @@ taskbar = None
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
 	try:
 		import taskbar
-	except Exception, exception:
+	except Exception as exception:
 		safe_print(exception)
 
 
@@ -177,8 +177,7 @@ class AboutDialog(wx.Dialog):
 		for item in items:
 			if (not isinstance(item, wx.Window) and
 				hasattr(item, "__iter__") and
-				filter(lambda subitem: not isinstance(subitem, (int, float)),
-					   item)):
+				[subitem for subitem in item if not isinstance(subitem, (int, float))]):
 				sizer = wx.BoxSizer(wx.HORIZONTAL)
 				self.add_item(sizer, self.panel.Sizer)
 				for subitem in item:
@@ -362,7 +361,7 @@ class AuiBetterTabArt(AuiDefaultTabArt):
 		# we'll just use a rectangle for the clipping region for now --
 		dc.SetClippingRegion(tab_x, tab_y, clip_width+1, tab_height-3)
 
-		border_points = [wx.Point() for i in xrange(6)]
+		border_points = [wx.Point() for i in range(6)]
 		agwFlags = self.GetAGWFlags()
 		
 		if agwFlags & aui.AUI_NB_BOTTOM:
@@ -795,7 +794,7 @@ class BaseApp(wx.App):
 				safe_print(traceback.format_exc())
 
 		if exc_info is not None:
-			raise exc_info[0], exc_info[1], exc_info[2]
+			raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
 
 	@staticmethod
 	def register_exitfunc(func, *args, **kwargs):
@@ -918,7 +917,7 @@ class BaseFrame(wx.Frame):
 		conn.settimeout(3)
 		try:
 			conn.connect((ip, port))
-		except socket.error, exception:
+		except socket.error as exception:
 			del conn
 			return exception
 		return conn
@@ -932,7 +931,7 @@ class BaseFrame(wx.Frame):
 				conn, addrport = sys._appsocket.accept()
 			except socket.timeout:
 				continue
-			except socket.error, exception:
+			except socket.error as exception:
 				if exception.errno == errno.EWOULDBLOCK:
 					sleep(.05)
 					continue
@@ -946,7 +945,7 @@ class BaseFrame(wx.Frame):
 				continue
 			try:
 				conn.settimeout(.2)
-			except socket.error, exception:
+			except socket.error as exception:
 				conn.close()
 				safe_print(lang.getstr("app.client.ignored", exception))
 				sleep(.2)
@@ -969,7 +968,7 @@ class BaseFrame(wx.Frame):
 				incoming = conn.recv(4096)
 			except socket.timeout:
 				continue
-			except socket.error, exception:
+			except socket.error as exception:
 				if exception.errno == errno.EWOULDBLOCK:
 					sleep(.05)
 					continue
@@ -1047,7 +1046,7 @@ class BaseFrame(wx.Frame):
 														 ("values",
 														  config.valid_values)):
 									valid = response[section] = []
-									for name, values in options.iteritems():
+									for name, values in options.items():
 										valid.append({"name": name,
 													  "values": values})
 							else:
@@ -1055,9 +1054,9 @@ class BaseFrame(wx.Frame):
 											"values": config.valid_values}
 							if responseformats[conn] == "plain":
 								valid = []
-								for section, options in response.iteritems():
+								for section, options in response.items():
 									valid.append("[%s]" % section)
-									for name, values in options.iteritems():
+									for name, values in options.items():
 										valid.append("%s = %s" %
 													 (name,
 													  " ".join(demjson.encode(value)
@@ -1078,7 +1077,7 @@ class BaseFrame(wx.Frame):
 									 command_timestamp)
 		try:
 			conn.shutdown(socket.SHUT_RDWR)
-		except socket.error, exception:
+		except socket.error as exception:
 			if exception.errno != errno.ENOTCONN:
 				safe_print("Warning - could not shutdown connection:", exception)
 		safe_print(lang.getstr("app.client.disconnect", addrport))
@@ -1176,7 +1175,7 @@ class BaseFrame(wx.Frame):
 										port = line
 									if port:
 										ports.append(port)
-					except EnvironmentError, exception:
+					except EnvironmentError as exception:
 						# This shouldn't happen
 						safe_print("Warning - could not read lockfile %s:" %
 								   lockfilename, exception)
@@ -1392,9 +1391,9 @@ class BaseFrame(wx.Frame):
 				if (child and isinstance(child, wx.grid.Grid) and
 					child.IsShownOnScreen()):
 					response = []
-					for row in xrange(child.GetNumberRows()):
+					for row in range(child.GetNumberRows()):
 						values = []
-						for col in xrange(child.GetNumberCols()):
+						for col in range(child.GetNumberCols()):
 							values.append(child.GetCellValue(row, col))
 						if responseformats[conn] == "plain":
 							values = demjson.encode(values).strip("[]").replace('","', '" "')
@@ -1501,7 +1500,7 @@ class BaseFrame(wx.Frame):
 			else:
 				response = "invalid"
 		elif data[0] == "getwindows" and len(data) == 1:
-			windows = filter(lambda win: win.IsShown(), wx.GetTopLevelWindows())
+			windows = [win for win in wx.GetTopLevelWindows() if win.IsShown()]
 			response = [format_ui_element(win, responseformats[conn])
 						for win in windows]
 			win = None
@@ -1560,7 +1559,7 @@ class BaseFrame(wx.Frame):
 						elif isinstance(child, (aui.AuiNotebook,
 												labelbook.FlatBookBase,
 												wx.Notebook)):
-							for page_idx in xrange(child.GetPageCount()):
+							for page_idx in range(child.GetPageCount()):
 								if child.GetPageText(page_idx) == value:
 									child.SetSelection(page_idx)
 									event = wx.EVT_NOTEBOOK_PAGE_CHANGED
@@ -1584,9 +1583,9 @@ class BaseFrame(wx.Frame):
 								else:
 									response = "forbidden"
 						elif isinstance(child, wx.ListCtrl):
-							for row in xrange(child.GetItemCount()):
+							for row in range(child.GetItemCount()):
 								item = []
-								for col in xrange(child.GetColumnCount()):
+								for col in range(child.GetColumnCount()):
 									item.append(child.GetItem(row, col).GetText())
 								if " ".join(item) == value:
 									state = child.GetItemState(row, wx.LIST_STATE_SELECTED)
@@ -1666,7 +1665,7 @@ class BaseFrame(wx.Frame):
 		else:
 			try:
 				response = self.process_data(data)
-			except Exception, exception:
+			except Exception as exception:
 				safe_print(exception)
 				if responseformats[conn] != "plain":
 					response = {"class": exception.__class__.__name__,
@@ -1729,7 +1728,7 @@ class BaseFrame(wx.Frame):
 		if response == "invalid":
 			safe_print(lang.getstr("app.incoming_message.invalid"))
 		if responseformats[conn] != "plain":
-			if not isinstance(response, (basestring, list)):
+			if not isinstance(response, (str, list)):
 				response = [response]
 			command = {"name": data[0], "timestamp": command_timestamp}
 			if data[1:]:
@@ -1750,12 +1749,12 @@ class BaseFrame(wx.Frame):
 		else:
 			if isinstance(response, dict):
 				response = ["%s = %s" % (name, value) for name, value in
-							response.iteritems()]
+							response.items()]
 			if isinstance(response, list):
 				response = "\n".join(response)
 		try:
 			conn.sendall("%s\4" % safe_str(response, "UTF-8"))
-		except socket.error, exception:
+		except socket.error as exception:
 			safe_print(exception)
 
 	def send_command(self, scripting_host_name_suffix, command):
@@ -1790,7 +1789,7 @@ class BaseFrame(wx.Frame):
 					return response
 			else:
 				safe_print("Warning - %s not running?" % scripting_host)
-		except Exception, exception:
+		except Exception as exception:
 			safe_print("Warning - couldn't talk to %s:" % scripting_host,
 					   exception)
 			return exception
@@ -2057,7 +2056,7 @@ class BaseFrame(wx.Frame):
 					# no initial items. Simply always set min height to that
 					# of a wx.Choice with items.
 					if not hasattr(BaseFrame, "_choiceheight"):
-						choice = wx.Choice(self, choices=[u"|"])
+						choice = wx.Choice(self, choices=["|"])
 						BaseFrame._choiceheight = choice.Size[1]
 						choice.Destroy()
 					child.MinSize = child.MinSize[0], BaseFrame._choiceheight
@@ -2462,10 +2461,10 @@ class HtmlWindow(wx.html.HtmlWindow):
 		""" Set displayed page with system default colors """
 		html = safe_unicode(source, "UTF-8")
 		bgcolor, text, linkcolor, vlinkcolor = get_html_colors()
-		if not u"<body" in html:
+		if not "<body" in html:
 			html = "<body>%s</body>" % html
 		html = re.sub(r"<body[^>]*",
-					  u'<body bgcolor="%s" text="%s" link="%s" alink="%s" vlink="%s"' %
+					  '<body bgcolor="%s" text="%s" link="%s" alink="%s" vlink="%s"' %
 					  (bgcolor.GetAsString(wx.C2S_HTML_SYNTAX),
 					   text.GetAsString(wx.C2S_HTML_SYNTAX),
 					   linkcolor.GetAsString(wx.C2S_HTML_SYNTAX),
@@ -2490,7 +2489,7 @@ class BitmapBackgroundBitmapButton(wx.BitmapButton):
 		dc = wx.PaintDC(self)
 		try:
 			dc = wx.GCDC(dc)
-		except Exception, exception:
+		except Exception as exception:
 			pass
 		dc.DrawBitmap(self.Parent.GetBitmap(), 0, -self.GetPosition()[1])
 		dc.DrawBitmap(self.GetBitmapLabel(), 0, 0)
@@ -2635,7 +2634,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 			# being replaced with boxes under wxGTK
 			try:
 				dc = wx.GCDC(dc)
-			except Exception, exception:
+			except Exception as exception:
 				pass
 		font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
 		dc.SetFont(font)
@@ -2824,11 +2823,11 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 			# Text height multiplier of 1.6 matches default popup menu item
 			# height under GNOME
-			line_height = math.ceil(control.GetTextExtent(u"69Gg")[1] * 1.6)
+			line_height = math.ceil(control.GetTextExtent("69Gg")[1] * 1.6)
 
 			# Find smallest display client area height
-			max_height = sys.maxint
-			for i in xrange(wx.Display.GetCount()):
+			max_height = sys.maxsize
+			for i in range(wx.Display.GetCount()):
 				max_height = min(wx.Display(i).ClientArea[3], max_height)
 
 			# Check if combined height of items exceeds available client area.
@@ -2937,7 +2936,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 class PathDialog(ConfirmDialog):
 
-	def __init__(self, parent, msg=u"", name="pathdialog"):
+	def __init__(self, parent, msg="", name="pathdialog"):
 		ConfirmDialog.__init__(self, parent, msg=msg,
 							   ok=lang.getstr("browse"),
 							   cancel=lang.getstr("cancel"), name=name)
@@ -3046,7 +3045,7 @@ class FlatShadedButton(GradientButton):
 		"""
 
 		if not getattr(self, "_lastBestSize", None):
-			dummy = u"FfGgJjPpYy"
+			dummy = "FfGgJjPpYy"
 			label = self.GetLabel() or dummy
 			
 			dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
@@ -3966,8 +3965,8 @@ class CustomGrid(wx.grid.Grid):
 			if shift:
 				self.BeginBatch()
 				rows = self.GetSelectionRows()
-				sel = range(min(self._anchor_row, row),
-							max(self._anchor_row, row) + 1)
+				sel = list(range(min(self._anchor_row, row),
+							max(self._anchor_row, row) + 1))
 				desel = []
 				add = []
 				for i in rows:
@@ -4706,7 +4705,7 @@ def fancytext_RenderToRenderer(str, renderer, enclose=True):
 		p.EndElementHandler = renderer.endElement
 		p.CharacterDataHandler = renderer.characterData
 		p.Parse(str, 1)
-	except xml.parsers.expat.error, err:
+	except xml.parsers.expat.error as err:
 		raise ValueError('error parsing text text "%s": %s' % (str, err)) 
 
 fancytext.RenderToRenderer = fancytext_RenderToRenderer
@@ -4893,7 +4892,7 @@ class BetterStaticFancyTextBase(object):
 		wrapped = ""
 		llen = 0
 		intag = False
-		hyphens = u"-\u2012\u2013\u2014\u2015"
+		hyphens = "-\u2012\u2013\u2014\u2015"
 		whitespace = "\n\t "
 		for c in label:
 			if c == "<":
@@ -5026,7 +5025,7 @@ class BetterStaticFancyText_SetLabelMarkup(BetterStaticFancyTextBase,
 	def __init__(self, parent, id, text, *args, **kwargs):
 		wx.Panel.__init__(self, parent, id, *args, **kwargs)
 		self.maxlen = 119
-		self._st = wx.StaticText(self, -1, u"")
+		self._st = wx.StaticText(self, -1, "")
 		self.Label = text
 
 	def SetLabel(self, label):
@@ -5140,7 +5139,7 @@ class LogWindow(InvincibleFrame):
 		# Fix wrong background color when disabled
 		self.log_txt.Enable = lambda enable=True: None
 		self.log_txt.Disable = lambda: None
-		if u"phoenix" in wx.PlatformInfo:
+		if "phoenix" in wx.PlatformInfo:
 			kwarg = "faceName"
 		else:
 			kwarg = "face"
@@ -5203,7 +5202,7 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
 		self._textwrapper = textwrap.TextWrapper(76)
-		self._linecontinuation = " " * 13 + u"\u21b3 "
+		self._linecontinuation = " " * 13 + "\u21b3 "
 		self._warning_lstr = lang.getstr("warning").lower()
 		self._error_lstr = lang.getstr("error").lower()
 
@@ -5216,7 +5215,7 @@ class LogWindow(InvincibleFrame):
 		for line in safe_unicode(txt).split("\n"):
 			if sys.platform == "win32":
 				# Formatting of boxes
-				line = line.replace(u"\u2500", u"-")
+				line = line.replace("\u2500", "-")
 			tsmatch = re.match(self._tspattern, line)
 			if tsmatch:
 				line = line[len(tsmatch.group()):]
@@ -5237,7 +5236,7 @@ class LogWindow(InvincibleFrame):
 					else:
 						line = ts + line
 					if i < i_last:
-						line = line.ljust(78 + 13) + u" \u21B2"
+						line = line.ljust(78 + 13) + " \u21B2"
 					lines.append(line)
 			else:
 				lines.append(ts + line)
@@ -5266,7 +5265,7 @@ class LogWindow(InvincibleFrame):
 			if textattr:
 				self.log_txt.SetStyle(start + 12, start + len(line),
 									  textattr)
-				if not line.endswith(u" \u21B2"):
+				if not line.endswith(" \u21B2"):
 					textattr = None
 			start += len(line + "\n")
 	
@@ -5330,7 +5329,7 @@ class LogWindow(InvincibleFrame):
 				file_ = open(path, "w")
 				file_.write(self.log_txt.GetValue().encode("UTF-8", "replace"))
 				file_.close()
-			except Exception, exception:
+			except Exception as exception:
 				InfoDialog(self, msg=safe_unicode(exception), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
@@ -5395,7 +5394,7 @@ class LogWindow(InvincibleFrame):
 					with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as zip:
 						for filename in os.listdir(logdir):
 							zip.write(os.path.join(logdir, filename), filename)
-				except Exception, exception:
+				except Exception as exception:
 					InfoDialog(self, msg=safe_unicode(exception), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
@@ -5454,7 +5453,7 @@ class ProgressDialog(wx.Dialog):
 			self.sizerH.Add(self.sizer0, 1, flag=wx.EXPAND)
 			try:
 				audio.init()
-			except Exception, exception:
+			except Exception as exception:
 				safe_print(exception)
 			self.processor_sound = audio.Sound(get_data_path("theme/engine_hum_loop.wav"),
 											   True)
@@ -5589,12 +5588,12 @@ class ProgressDialog(wx.Dialog):
 		self.buttonpanel.Layout()
 		
 		# Use an accelerator table for 0-9, a-z, numpad
-		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes
+		keycodes = list(range(48, 58)) + list(range(97, 123)) + numpad_keycodes
 		self.id_to_keycode = {}
 		for keycode in keycodes:
 			self.id_to_keycode[wx.Window.NewControlId()] = keycode
 		accels = []
-		for id, keycode in self.id_to_keycode.iteritems():
+		for id, keycode in self.id_to_keycode.items():
 			self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
 			accels.append((wx.ACCEL_NORMAL, keycode, id))
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
@@ -5652,11 +5651,11 @@ class ProgressDialog(wx.Dialog):
 		self.stop_timer()
 		del self.timer
 		if hasattr(wx.Window, "UnreserveControlId"):
-			for id in self.id_to_keycode.iterkeys():
+			for id in self.id_to_keycode.keys():
 				if id < 0:
 					try:
 						wx.Window.UnreserveControlId(id)
-					except wx.wxAssertionError, exception:
+					except wx.wxAssertionError as exception:
 						safe_print(exception)
 		
 	def OnMove(self, event):
@@ -5713,7 +5712,7 @@ class ProgressDialog(wx.Dialog):
 		if not self.indeterminate:
 			self.indeterminate = True
 			if hasattr(self, "remaining_time"):
-				self.remaining_time.Label = u"––:––:––"
+				self.remaining_time.Label = "––:––:––"
 			if self.taskbar and not self.paused:
 				self.taskbar.set_progress_state(taskbar.TBPF_INDETERMINATE)
 		self.gauge.Pulse()
@@ -5852,7 +5851,7 @@ class ProgressDialog(wx.Dialog):
 					bitmaps.append(im)
 				# Needs to be exactly 17 images
 				if bitmaps and len(bitmaps) == 17:
-					for i in xrange(7):
+					for i in range(7):
 						bitmaps.extend(bitmaps[9:17])
 					bitmaps.extend(bitmaps[9:13])
 					# Fade in
@@ -5864,7 +5863,7 @@ class ProgressDialog(wx.Dialog):
 					for i, im in enumerate(bitmaps[:9]):
 						bitmaps[i] = im.ConvertToBitmap()
 					# Normal
-					for i in xrange(41):
+					for i in range(41):
 						im = bitmaps[i + 19].Copy()
 						im.RotateHue(.05 * (i / 50.0))
 						bitmaps[i + 19] = im.ConvertToBitmap()
@@ -5893,7 +5892,7 @@ class ProgressDialog(wx.Dialog):
 						bitmaps.append(im)
 				# Needs to be exactly 9 images
 				if bitmaps and len(bitmaps) == 9:
-					for i in xrange(3):
+					for i in range(3):
 						bitmaps.extend(bitmaps[:9])
 					# Fade in
 					for i, im in enumerate(bitmaps[:27]):
@@ -5903,7 +5902,7 @@ class ProgressDialog(wx.Dialog):
 					for i, im in enumerate(bitmaps[27:]):
 						bitmaps[i + 27] = im.ConvertToBitmap()
 					# Fade out
-					for i in xrange(3):
+					for i in range(3):
 						bitmaps.extend(bitmaps[27:36])
 					for i, bmp in enumerate(bitmaps[36:]):
 						im = bmp.ConvertToImage().AdjustChannels(1, 1, 1, 1 - i / 26.0)
@@ -5988,7 +5987,7 @@ class ProgressDialog(wx.Dialog):
 			self.time2 = 0
 			self.time3 = self.time
 			self.time4 = 0
-			self.remaining_time.Label = u"––:––:––"
+			self.remaining_time.Label = "––:––:––"
 
 	def set_progress_type(self, progress_type):
 		if progress_type != self.progress_type:
@@ -6122,7 +6121,7 @@ class SimpleTerminal(InvincibleFrame):
 		self.console = wx.TextCtrl(self.panel, -1, "", style=consolestyle)
 		self.console.SetBackgroundColour("#272727")
 		self.console.SetForegroundColour("#808080")
-		if u"phoenix" in wx.PlatformInfo:
+		if "phoenix" in wx.PlatformInfo:
 			kwarg = "faceName"
 		else:
 			kwarg = "face"
@@ -6683,14 +6682,14 @@ class TooltipWindow(InvincibleFrame):
 			msg = msg[rowspercol:]
 		for msg in msgs:
 			label = "\n".join(msg)
-			if u"<" in label:
+			if "<" in label:
 				cls = BetterStaticFancyText
 			else:
 				cls = wx.StaticText
 			col = cls(self.panel, -1, "")
 			if isinstance(col, wx.Panel):
 				col.BackgroundColour = self.panel.BackgroundColour
-			if u"<" in label and wrap:
+			if "<" in label and wrap:
 				col.maxlen = wrap
 			col.SetMaxFontSize()
 			maxlinewidth = 0
@@ -6702,7 +6701,7 @@ class TooltipWindow(InvincibleFrame):
 			# tab char, extra spacing needed
 			tabwidth = tabcount * col.GetTextExtent("\t")[0]
 			col.Label = label
-			if not u"<" in label:
+			if not "<" in label:
 				col.MinSize = maxlinewidth + tabwidth + margin * 2, -1
 			self.sizer3.Add(col, flag=wx.LEFT, border=margin)
 
@@ -7069,7 +7068,7 @@ def get_html_colors(allow_alpha=False):
 			linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 	vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
 	if not allow_alpha:
-		for key, value in locals().items():
+		for key, value in list(locals().items()):
 			if isinstance(value, wx.Colour):
 				locals()[key].Set(*value[:3])
 	return bgcolor, text, linkcolor, vlinkcolor
@@ -7129,7 +7128,7 @@ def format_ui_element(child, format="plain"):
 	if child.TopLevelParent:
 		if not hasattr(child.TopLevelParent, "_win2name"):
 			child.TopLevelParent._win2name = {}
-			for name, attr in child.TopLevelParent.__dict__.iteritems():
+			for name, attr in child.TopLevelParent.__dict__.items():
 				if isinstance(attr, wx.Window):
 					child.TopLevelParent._win2name[attr] = name
 		name = child.TopLevelParent._win2name.get(child, child.Name)
@@ -7138,9 +7137,9 @@ def format_ui_element(child, format="plain"):
 	items = getattr(child, "Items", [])
 	value = None
 	if not items and isinstance(child, wx.ListCtrl):
-		for row in xrange(child.GetItemCount()):
+		for row in range(child.GetItemCount()):
 			item = []
-			for col in xrange(child.GetColumnCount()):
+			for col in range(child.GetColumnCount()):
 				item.append(child.GetItem(row, col).GetText())
 			items.append(" ".join(item))
 		row = child.GetFirstSelected()
@@ -7148,14 +7147,14 @@ def format_ui_element(child, format="plain"):
 			value = items[row]
 	elif isinstance(child, (aui.AuiNotebook, labelbook.FlatBookBase,
 							wx.Notebook)):
-		for page_idx in xrange(child.GetPageCount()):
+		for page_idx in range(child.GetPageCount()):
 			items.append(child.GetPageText(page_idx))
 		page_idx = child.GetSelection()
 		if page_idx != wx.NOT_FOUND:
 			value = child.GetPageText(page_idx)
 	cols = []
 	if isinstance(child, wx.grid.Grid):
-		for col in xrange(child.GetNumberCols()):
+		for col in range(child.GetNumberCols()):
 			cols.append(child.GetColLabelValue(col))
 	if format != "plain":
 		uielement = {"class": child.__class__.__name__, "name": name,
@@ -7273,11 +7272,11 @@ def test():
 	lang.init()
 	def key_handler(self, event):
 		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
-			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+			print("Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(chr(event.GetKeyCode())))
 		elif event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
-			print "Received EVT_KEY_DOWN", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
+			print("Received EVT_KEY_DOWN", event.GetKeyCode(), repr(chr(event.GetKeyCode())))
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
-			print "Received EVT_MENU", self.id_to_keycode.get(event.GetId()), repr(unichr(self.id_to_keycode.get(event.GetId())))
+			print("Received EVT_MENU", self.id_to_keycode.get(event.GetId()), repr(chr(self.id_to_keycode.get(event.GetId()))))
 		event.Skip()
 			
 	ProgressDialog.key_handler = key_handler

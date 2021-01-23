@@ -10,7 +10,7 @@ class Cube3D(object):
 			end = numentries
 		for name in ("start", "end"):
 			v = locals()[name]
-			if not isinstance(v, (int, long)):
+			if not isinstance(v, int):
 				raise TypeError("integer %s argument expected, got %s" %
 								(name, v.__class__.__name__))
 		start = self._clamp(start, 0, numentries, -1)
@@ -31,7 +31,8 @@ class Cube3D(object):
 			return default
 		return self[i]
 
-	def index(self, (c0, c1, c2)):
+	def index(self, xxx_todo_changeme):
+		(c0, c1, c2) = xxx_todo_changeme
 		if not (c0, c1, c2) in self:
 			raise ValueError("%r not in %r" % ((c0, c1, c2), self))
 		i = c0 * self._size ** 2 + c1 * self._size + c2
@@ -49,7 +50,8 @@ class Cube3D(object):
 			v = fallback or upper
 		return v
 
-	def __contains__(self, (c0, c1, c2)):
+	def __contains__(self, xxx_todo_changeme1):
+		(c0, c1, c2) = xxx_todo_changeme1
 		return (c0 == int(c0) and c1 == int(c1) and c2 == int(c2) and
 				max(c0, c1, c2) < self._size and
 				self._start <= c0 * self._size ** 2 +
@@ -92,7 +94,7 @@ class Cube3DIterator(Cube3D):
 	def __iter__(self):
 		return self
 
-	def next(self):
+	def __next__(self):
 		if self._next == self._len:
 			raise StopIteration
 		else:

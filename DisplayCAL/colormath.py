@@ -339,7 +339,7 @@ rgb_spaces = {
 
 
 def get_cat_matrix(cat="Bradford"):
-	if isinstance(cat, basestring):
+	if isinstance(cat, str):
 		cat = cat_matrices[cat]
 	if not isinstance(cat, Matrix3x3):
 		cat = Matrix3x3(cat)
@@ -412,7 +412,7 @@ def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None,
 				 tuple(whitepoint_destination) if isinstance(whitepoint_destination,
 															 (list, tuple))
 				 else whitepoint_destination,
-				 cat if isinstance(cat, basestring) else id(cat))
+				 cat if isinstance(cat, str) else id(cat))
 	if cachehash in wp_adaption_matrix.cache:
 		return wp_adaption_matrix.cache[cachehash]
 	cat = get_cat_matrix(cat)
@@ -535,7 +535,7 @@ def interp(x, xp, fp, left=None, right=None):
 	interp(0, [0, 0], [0, 1]) will return 0
 	
 	"""
-	if not isinstance(x, (int, long, float, complex)):
+	if not isinstance(x, (int, float, complex)):
 		yi = []
 		for n in x:
 			yi.append(interp(n, xp, fp, left, right))
@@ -563,9 +563,9 @@ def interp(x, xp, fp, left=None, right=None):
 def interp_resize(iterable, new_size, use_numpy=False):
 	""" Change size of iterable through linear interpolation """
 	result = []
-	x_new = range(len(iterable))
+	x_new = list(range(len(iterable)))
 	interp = Interp(x_new, iterable, use_numpy=use_numpy)
-	for i in xrange(new_size):
+	for i in range(new_size):
 		result.append(interp(i / (new_size - 1.0) * (len(iterable) - 1.0)))
 	return result
 
@@ -575,7 +575,7 @@ def interp_fill(xp, fp, new_size, use_numpy=False):
 	result = []
 	last = xp[-1]
 	interp = Interp(xp, fp, use_numpy=use_numpy)
-	for i in xrange(new_size):
+	for i in range(new_size):
 		result.append(interp(i / (new_size - 1.0) * last))
 	return result
 
@@ -595,7 +595,7 @@ def smooth_avg(values, passes=1, window=None, protect=None):
 			warnings.warn("Invalid window %r, size %i - using default (1, 1, 1)" %
 						  (window, len(window)), Warning)
 		window = (1.0, 1.0, 1.0)
-	for x in xrange(0, passes):
+	for x in range(0, passes):
 		data = []
 		for j, v in enumerate(values):
 			tmpwindow = window
@@ -683,7 +683,7 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 					  weighting factor (all three default to 1 if not set)
 
 		"""
-		if isinstance(method, basestring):
+		if isinstance(method, str):
 			method = method.lower()
 		else:
 			method = str(int(method))
@@ -916,7 +916,7 @@ def CIEDCCT2xyY(T, scale=1.0):
 	Based on formula from http://brucelindbloom.com/Eqn_T_to_xy.html
 	
 	"""
-	if isinstance(T, basestring):
+	if isinstance(T, str):
 		# Assume standard illuminant, e.g. "D50"
 		return XYZ2xyY(*get_standard_illuminant(T, scale=scale))
 	if not (2500 <= T <= 25000):
@@ -1321,7 +1321,7 @@ def Luv2XYZ(L, u, v, whitepoint=None, scale=1.0):
 	X = (d - b) / (a - c)
 	Z = X * a + b
 	
-	return tuple([v * scale for v in X, Y, Z])
+	return tuple([v * scale for v in (X, Y, Z)])
 
 
 def RGB2HSI(R, G, B, scale=1.0):
@@ -1454,7 +1454,7 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0, eotf=None):
 			RGB[i] = eotf(v)
 		elif isinstance(gamma, (list, tuple)):
 			RGB[i] = interp(v, [n / float(len(gamma) - 1) for n in
-							    xrange(len(gamma))], gamma)
+							    range(len(gamma))], gamma)
 		else:
 			RGB[i] = specialpow(v, gamma)
 	XYZ = matrix * RGB
@@ -1529,7 +1529,7 @@ def YPbPr2RGB(Y, Pb, Pr, rgb_space="NTSC 1953", scale=1.0, round_=False,
 			  clamp=True):
 	""" Y'PbPr to R'G'B' """
 	RGB = RGB2YPbPr_matrix(rgb_space).inverted() * (Y, Pb, Pr)
-	for i in xrange(3):
+	for i in range(3):
 		if clamp:
 			RGB[i] = min(1.0, max(0.0, RGB[i]))
 		RGB[i] *= scale
@@ -1610,7 +1610,7 @@ def find_primaries_wp_xy_rgb_space_name(xy, rgb_space_names=None,
 	return its name (or None if no match)
 	
 	"""
-	for i, rgb_space_name in enumerate(rgb_space_names or rgb_spaces.iterkeys()):
+	for i, rgb_space_name in enumerate(rgb_space_names or iter(rgb_spaces.keys())):
 		if not rgb_space_names and rgb_space_name in ("ECI RGB", "ECI RGB v2",
 													  "SMPTE 240M", "sRGB"):
 			# Skip in favor of base color space (i.e. NTSC 1953, SMPTE-C and
@@ -1624,7 +1624,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 	""" Return gamma, whitepoint, primaries and RGB -> XYZ matrix """
 	if not rgb_space:
 		rgb_space = "sRGB"
-	if isinstance(rgb_space, basestring):
+	if isinstance(rgb_space, str):
 		rgb_space = rgb_spaces[rgb_space]
 	cachehash = tuple(map(id, rgb_space[:5])), scale
 	if cachehash in get_rgb_space.cache:
@@ -1648,7 +1648,7 @@ def get_rgb_space_primaries_wp_xy(rgb_space=None, digits=4):
 	"""
 	rgb_space = get_rgb_space(rgb_space)
 	xy = []
-	for i in xrange(3):
+	for i in range(3):
 		xy.extend(rgb_space[2:][i][:2])
 	xy.extend(XYZ2xyY(*get_whitepoint(rgb_space[1]))[:2])
 	if digits:
@@ -1692,7 +1692,7 @@ def get_whitepoint(whitepoint=None, scale=1.0, planckian=False):
 	cachehash = whitepoint, scale, planckian
 	if cachehash in get_whitepoint.cache:
 		return get_whitepoint.cache[cachehash]
-	if isinstance(whitepoint, basestring):
+	if isinstance(whitepoint, str):
 		whitepoint = get_standard_illuminant(whitepoint)
 	elif isinstance(whitepoint, (float, int)):
 		cct = whitepoint
@@ -1728,17 +1728,17 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 	
 	"""
 	if isinstance(iterable, dict):
-		keys = iterable.keys()
-		values = iterable.values()
+		keys = list(iterable.keys())
+		values = list(iterable.values())
 	else:
 		if hasattr(iterable, "next"):
 			values = list(iterable)
 		else:
 			values = iterable
-		keys = xrange(len(values))
+		keys = range(len(values))
 	if passes:
 		values = smooth_avg(values, passes, window)
-	sequence = zip(keys, values)
+	sequence = list(zip(keys, values))
 	numvalues = len(sequence)
 	s_new = []
 	y_min = sequence[0][1]
@@ -1751,11 +1751,11 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 	x_new = [item[0] for item in sequence]
 	y = [item[1] for item in sequence]
 	values = []
-	for i in xrange(numvalues):
+	for i in range(numvalues):
 		values.append(interp(i, x_new, y))
 	if isinstance(iterable, dict):
 		# Add in original keys
-		return iterable.__class__(zip(keys, values))
+		return iterable.__class__(list(zip(keys, values)))
 	return values
 
 
@@ -2091,7 +2091,7 @@ def XYZ2Lpt(X, Y, Z, whitepoint=None):
 
 	lms = xyz2lms * (X, Y, Z)
 
-	for j in xrange(3):
+	for j in range(3):
 		lms[j] /= wlms[j]
 
 		if (lms[j] > 0.008856451586):
@@ -2134,7 +2134,7 @@ def Lpt2XYZ(L, p, t, whitepoint=None, scale=1.0):
 
 	lms = Lpt2LMS_matrix * (L, p, t)
 
-	for j in xrange(3):
+	for j in range(3):
 		lms[j] = (lms[j] + 16.0) / 116.0
 
 		if lms[j] > 24.0 / 116.0:
@@ -2248,7 +2248,7 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True,
 			key = id(gamma)
 			if not key in XYZ2RGB.interp:
 				ginterp = Interp(gamma, [n / float(len(gamma) - 1) for n in
-									     xrange(len(gamma))], use_numpy=True)
+									     range(len(gamma))], use_numpy=True)
 				XYZ2RGB.interp[key] = ginterp
 			else:
 				ginterp = XYZ2RGB.interp[key]
@@ -2323,9 +2323,9 @@ def dmatrixz(nrl, nrh, ncl, nch):
 	rows = nrh - nrl + 1
 	cols = nch - ncl + 1
 
-	for i in xrange(rows):
+	for i in range(rows):
 		m[i + nrl] = {}
-		for j in xrange(cols):
+		for j in range(cols):
 			m[i][j + ncl] = 0
 
 	return m
@@ -2399,13 +2399,13 @@ def linmin(cp, xi, di, ftol, func, fdata):
 	# (Search isn't symetric, but it seems to depend on cp being
 	# best current solution ?)
 	ax = 0.0
-	for i in xrange(di):
+	for i in range(di):
 		xt[i] = cp[i] + ax * xi[i]
 	af = func(fdata, xt)
 
 	# xx being vector offset 0.618
 	xx =  1.0 / POWELL_GOLD
-	for i in xrange(di):
+	for i in range(di):
 		xt[i] = cp[i] + xx * xi[i]
 	xf = func(fdata, xt)
 
@@ -2424,7 +2424,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 																		 xx, xf))
 
 	bx = xx + POWELL_GOLD * (xx-ax)  # Guess b beyond a -> x
-	for i in xrange(di):
+	for i in range(di):
 		xt[i] = cp[i] + bx * xi[i]
 	bf = func(fdata, xt)
 
@@ -2451,7 +2451,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 
 		if (xx - ux) * (ux - bx) > 0.0:  # u is between x and b
 
-			for i in xrange(di):  # Evaluate u
+			for i in range(di):  # Evaluate u
 				xt[i] = cp[i] + ux * xi[i]
 			uf = func(fdata, xt)
 
@@ -2471,7 +2471,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 			ux = bx + POWELL_GOLD * (bx - xx)
 
 		elif (bx - ux) * (ux - ulim) > 0.0:  # u is between b and limit
-			for i in xrange(di):  # Evaluate u
+			for i in range(di):  # Evaluate u
 				xt[i] = cp[i] + ux * xi[i]
 			uf = func(fdata, xt)
 
@@ -2494,7 +2494,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 		else:  # u is to left side of x ?
 			ux = bx + POWELL_GOLD * (bx - xx)
 		# Evaluate u, and move into place at b
-		for i in xrange(di):
+		for i in range(di):
 			xt[i] = cp[i] + ux * xi[i]
 		uf = func(fdata, xt)
 		ax = xx
@@ -2535,7 +2535,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 		wx = vx = xx  # Initial values of other center points
 		wf = xf = xf
 
-		for iter in xrange(1, POWELL_MAXIT + 1):
+		for iter in range(1, POWELL_MAXIT + 1):
 			mx = 0.5 * (ax + bx)  # m is center of bracket values
 			#if ABSTOL:
 				#tol1 = ftol  # Absolute tollerance
@@ -2600,7 +2600,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 								  (ux, xx, tol1))
 
 			# Evaluate function
-			for i in xrange(di):
+			for i in range(di):
 				xt[i] = cp[i] + ux * xi[i]
 			uf = func(fdata, xt)
 
@@ -2638,7 +2638,7 @@ def linmin(cp, xi, di, ftol, func, fdata):
 		# Solution is at xx, xf
 
 		# Compute solution vector
-		for i in xrange(di):
+		for i in range(di):
 			cp[i] += xx * xi[i]
 
 	return xf
@@ -2680,7 +2680,7 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 
 	# Create initial direction matrix by
 	# placing search start on diagonal
-	for i in xrange(di):
+	for i in range(di):
 		dmtx[i][i] = s[i]
 		# Save the starting point
 		spt[i] = cp[i]
@@ -2692,7 +2692,7 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 	retv = func(fdata, cp)
 
 	# Iterate untill we converge on a solution, or give up.
-	for iter in xrange(1, maxit):
+	for iter in range(1, maxit):
 		#lretv  # Last function return value
 		ibig = 0  # Index of biggest delta
 		del_ = 0.0  # Biggest function value decrease
@@ -2701,11 +2701,11 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 		pretv = retv  # Save return value at top of iteration
 
 		# Loop over all directions in the set
-		for i in xrange(di):
+		for i in range(di):
 
 			logging.debug("Looping over direction %d" % i)
 
-			for j in xrange(di):  # Extract this direction to make search vector
+			for j in range(di):  # Extract this direction to make search vector
 				svec[j] = dmtx[j][i]
 
 			# Minimize in that direction
@@ -2742,7 +2742,7 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 		logging.debug("Not stopping because curdel %f > stopth %f" % (curdel,
 																	  stopth))
 
-		for i in xrange(di):
+		for i in range(di):
 			svec[i] = cp[i] - spt[i]  # Average direction moved after minimization round
 			xpt[i]  = cp[i] + svec[i]  # Extrapolated point after round of minimization
 			spt[i]  = cp[i]  # New start point for next round
@@ -2759,7 +2759,7 @@ def powell(di, cp, s, ftol, maxit, func, fdata, prog=None, pdata=None):
 				# Move to the minimum of the new direction
 				retv = linmin(cp, svec, di, ftol, func, fdata)
 
-				for i in xrange(di):  # Save the new direction
+				for i in range(di):  # Save the new direction
 					dmtx[i][ibig] = svec[i]  # by replacing best previous
 
 	if prog:  # Report final progress
@@ -2904,7 +2904,7 @@ class BT1886(object):
 
 		logging.debug("bt1886 RGB in %f %f %f" % (out[0], out[1], out[2]))
 
-		for j in xrange(3):
+		for j in range(3):
 			vv = out[j]
 		
 			if self.apply_trc:
@@ -3527,15 +3527,15 @@ def debug_caches():
 		c = getattr(globals()[cn], ck)
 		count = 0
 		seen = {}
-		for k, v in c.iteritems():
-			for kk, vv in c.iteritems():
+		for k, v in c.items():
+			for kk, vv in c.items():
 				# Check for equality, not identity
 				if k != kk and v == vv and not kk in seen:
 					count += 1
 					seen[kk] = True
 		safe_print(cache, len(c), "entries", max(count - 1, 0), "duplicates")
 		if count > 1:
-			for k, v in c.iteritems():
+			for k, v in c.items():
 				safe_print(k, v)
 
 
@@ -3558,22 +3558,22 @@ def test():
 		elif i == 3:
 			XYZ = get_standard_illuminant("D65", ("ASTM E308-01", ))
 			wp = " ".join([str(v) for v in XYZ])
-		print ("RGB and corresponding XYZ (nominal range 0.0 - 1.0) with "
-			   "whitepoint %s" % wp)
+		print(("RGB and corresponding XYZ (nominal range 0.0 - 1.0) with "
+			   "whitepoint %s" % wp))
 		for name in rgb_spaces:
 			spc = rgb_spaces[name]
 			if i == 0:
 				XYZ = CIEDCCT2XYZ(spc[1])
 			spc = spc[0], XYZ, spc[2], spc[3], spc[4]
-			print "%s 1.0, 1.0, 1.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc)]
-			print "%s 1.0, 0.0, 0.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc)]
-			print "%s 0.0, 1.0, 0.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc)]
-			print "%s 0.0, 0.0, 1.0 = XYZ" % name, \
-				[str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc)]
-		print ""
+			print("%s 1.0, 1.0, 1.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 1.0, 1.0, spc)])
+			print("%s 1.0, 0.0, 0.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(1.0, 0.0, 0.0, spc)])
+			print("%s 0.0, 1.0, 0.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 1.0, 0.0, spc)])
+			print("%s 0.0, 0.0, 1.0 = XYZ" % name, \
+				[str(round(v, 4)) for v in RGB2XYZ(0.0, 0.0, 1.0, spc)])
+		print("")
 
 if __name__ == '__main__':
 	test()

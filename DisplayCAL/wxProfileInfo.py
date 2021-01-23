@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import re
 import subprocess as sp
 import math
@@ -169,18 +169,18 @@ class GamutCanvas(LUTCanvas):
 			min_y = -150.0
 			step = 50
 		
-		convert2coords = {"a*b*": lambda X, Y, Z: colormath.XYZ2Lab(*[v * 100 for v in X, Y, Z])[1:],
+		convert2coords = {"a*b*": lambda X, Y, Z: colormath.XYZ2Lab(*[v * 100 for v in (X, Y, Z)])[1:],
 						  "xy": lambda X, Y, Z: colormath.XYZ2xyY(X, Y, Z)[:2],
-						  "u*v*": lambda X, Y, Z: colormath.XYZ2Luv(*[v * 100 for v in X, Y, Z])[1:],
+						  "u*v*": lambda X, Y, Z: colormath.XYZ2Luv(*[v * 100 for v in (X, Y, Z)])[1:],
 						  "u'v'": lambda X, Y, Z: colormath.XYZ2Lu_v_(X, Y, Z)[1:],
-						  "DIN99": lambda X, Y, Z: colormath.XYZ2DIN99(*[v * 100 for v in X, Y, Z])[1:],
-						  "DIN99b": lambda X, Y, Z: colormath.XYZ2DIN99b(*[v * 100 for v in X, Y, Z])[1:],
-						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in X, Y, Z])[1:],
-						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:],
+						  "DIN99": lambda X, Y, Z: colormath.XYZ2DIN99(*[v * 100 for v in (X, Y, Z)])[1:],
+						  "DIN99b": lambda X, Y, Z: colormath.XYZ2DIN99b(*[v * 100 for v in (X, Y, Z)])[1:],
+						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in (X, Y, Z)])[1:],
+						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in (X, Y, Z)])[1:],
 						  "ICtCp": lambda X, Y, Z: colormath.XYZ2ICtCp(X, Y, Z,
 																	  clamp=False)[1:],
 						  "IPT": lambda X, Y, Z: colormath.XYZ2IPT(X, Y, Z)[1:],
-						  "Lpt": lambda X, Y, Z: colormath.XYZ2Lpt(*[v * 100 for v in X, Y, Z])[1:]}[self.colorspace]
+						  "Lpt": lambda X, Y, Z: colormath.XYZ2Lpt(*[v * 100 for v in (X, Y, Z)])[1:]}[self.colorspace]
 
 		if show_outline and (self.colorspace == "a*b*" or
 							 self.colorspace.startswith("DIN99")):
@@ -196,7 +196,7 @@ class GamutCanvas(LUTCanvas):
 		# Add color temp graph
 		if whitepoint == 1:
 			colortemps = []
-			for kelvin in xrange(4000, 25001, 40):
+			for kelvin in range(4000, 25001, 40):
 				colortemps.append(convert2coords(*colormath.CIEDCCT2XYZ(kelvin)))
 			polys.append(plot.PolyLine(colortemps,
 										 colour=wx.Colour(255, 255, 255, 204),
@@ -204,7 +204,7 @@ class GamutCanvas(LUTCanvas):
 		elif whitepoint == 2:
 			colortemps = []
 			# Stepsize 38 = endpoint 24999
-			for kelvin in xrange(1667, 25001, 38):
+			for kelvin in range(1667, 25001, 38):
 				colortemps.append(convert2coords(*colormath.planckianCT2XYZ(kelvin)))
 			polys.append(plot.PolyLine(colortemps,
 										 colour=wx.Colour(255, 255, 255, 204),
@@ -371,14 +371,14 @@ class GamutCanvas(LUTCanvas):
 			if (profile.profileClass == "nmcl" and "ncl2" in profile.tags and
 				isinstance(profile.tags.ncl2, ICCP.NamedColor2Type) and
 				profile.connectionColorSpace in ("Lab", "XYZ")):
-				for k, v in profile.tags.ncl2.iteritems():
-					color = v.pcs.values()
+				for k, v in profile.tags.ncl2.items():
+					color = list(v.pcs.values())
 					if profile.connectionColorSpace == "Lab":
 						# Need to convert to XYZ
 						color = colormath.Lab2XYZ(*color)
 					if intent == "a" and "wtpt" in profile.tags:
 						color = colormath.adapt(color[0], color[1], color[2],
-												whitepoint_destination=profile.tags.wtpt.ir.values())
+												whitepoint_destination=list(profile.tags.wtpt.ir.values()))
 					pcs_triplets.append(color)
 				pcs_triplets.sort()
 			elif (profile.version >= 4 and
@@ -430,12 +430,12 @@ class GamutCanvas(LUTCanvas):
 					minv = 0.0
 					maxv = 1.0
 				step = (maxv - minv) / (self.size - 1)
-				for j in xrange(min(3, channels)):
-					for k in xrange(min(3, channels)):
+				for j in range(min(3, channels)):
+					for k in range(min(3, channels)):
 						device_value = [0.0] * channels
 						device_value[j] = maxv
 						if j != k or channels == 1:
-							for l in xrange(self.size):
+							for l in range(self.size):
 								device_value[k] = minv + step * l
 								device_values.append(list(device_value))
 				if profile.colorSpace in ("HLS", "HSV", "Lab", "Luv", "YCbr", "Yxy"):
@@ -473,7 +473,7 @@ class GamutCanvas(LUTCanvas):
 						device_values.append([100.0, 0.0, 0.0])
 				elif profile.colorSpace in ("XYZ", "Yxy"):
 					if profile.colorSpace == "XYZ":
-						device_values.append(profile.tags.wtpt.pcs.values())
+						device_values.append(list(profile.tags.wtpt.pcs.values()))
 					else:
 						device_values.append(profile.tags.wtpt.pcs.xyY)
 				elif profile.colorSpace != "GRAY":
@@ -500,7 +500,7 @@ class GamutCanvas(LUTCanvas):
 						# Device -> PCS, fwd
 						odata = self.worker.xicclu(profile, odata, fwd_intent,
 												   "f", order)
-				except Exception, exception:
+				except Exception as exception:
 					self.errors.append(Error(safe_unicode(exception)))
 					continue
 
@@ -666,7 +666,7 @@ class GamutViewOptions(wx_Panel):
 			srgb = ICCP.ICCProfile(get_data_path("ref/sRGB.icm"))
 		except EnvironmentError:
 			pass
-		except Exception, exception:
+		except Exception as exception:
 			safe_print(exception)
 		if srgb:
 			self.comparison_profiles[srgb.getDescription()] = srgb
@@ -745,7 +745,7 @@ class GamutViewOptions(wx_Panel):
 								profile_no,
 								intent=self.intent,
 								direction=self.direction, order=self.order)
-		except Exception, exception:
+		except Exception as exception:
 			show_result_dialog(exception, parent)
 		if reset:
 			parent.client.reset()
@@ -759,18 +759,18 @@ class GamutViewOptions(wx_Panel):
 
 	@property
 	def comparison_profile(self):
-		return self.comparison_profiles.values()[self.comparison_profile_select.GetSelection()]
+		return list(self.comparison_profiles.values())[self.comparison_profile_select.GetSelection()]
 
 	def comparison_profile_drop_handler(self, path):
 		try:
 			profile = ICCP.ICCProfile(path)
-		except Exception, exception:
+		except Exception as exception:
 			show_result_dialog(exception, self.TopLevelParent)
 		else:
 			desc = profile.getDescription()
 			self.comparison_profiles[desc] = profile
 			self.comparison_profiles_sort()
-			self.comparison_profile_select.SetSelection(self.comparison_profiles.keys().index(desc))
+			self.comparison_profile_select.SetSelection(list(self.comparison_profiles.keys()).index(desc))
 			self.comparison_profile_select_handler(None)
 
 	def comparison_profile_select_handler(self, event):
@@ -788,7 +788,7 @@ class GamutViewOptions(wx_Panel):
 		comparison_profiles.sort(cmp, key=lambda s: s.lower())
 		self.comparison_profiles = self.comparison_profiles[:2]
 		self.comparison_profiles.update(comparison_profiles)
-		self.comparison_profile_select.SetItems(self.comparison_profiles.keys())
+		self.comparison_profile_select.SetItems(list(self.comparison_profiles.keys()))
 
 	@property
 	def direction(self):
@@ -1067,7 +1067,7 @@ class ProfileInfoFrame(LUTFrame):
 		
 		hsizer.Add((16, 0))
 		
-		self.show_as_L = CustomCheckBox(self.lut_view_options, -1, u"L* \u2192")
+		self.show_as_L = CustomCheckBox(self.lut_view_options, -1, "L* \u2192")
 		self.show_as_L.SetForegroundColour(FGCOLOUR)
 		self.show_as_L.SetValue(True)
 		hsizer.Add(self.show_as_L, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
@@ -1202,7 +1202,7 @@ class ProfileInfoFrame(LUTFrame):
 		if not isinstance(profile, ICCP.ICCProfile):
 			try:
 				profile = ICCP.ICCProfile(profile)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
 									     "\n" + profile), self)
 				self.DrawCanvas(reset=reset)
@@ -1249,7 +1249,7 @@ class ProfileInfoFrame(LUTFrame):
 				choice.append(lang.getstr("vcgt"))
 			try:
 				self.lookup_tone_response_curves()
-			except Exception, exception:
+			except Exception as exception:
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				choice.append(lang.getstr("[rgb]TRC"))
@@ -1263,7 +1263,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.select_current_page()
 		self.plot_mode_select.Enable()
 		
-		self.SetTitle(u" \u2014 ".join([lang.getstr("profile.info"),
+		self.SetTitle(" \u2014 ".join([lang.getstr("profile.info"),
 										profile.getDescription()]))
 		
 		rows = [("", "")]
@@ -1272,7 +1272,7 @@ class ProfileInfoFrame(LUTFrame):
 			label = label.replace("\0", "")
 			if value is None:
 				value = ""
-			elif not isinstance(value, unicode):
+			elif not isinstance(value, str):
 				value = safe_unicode(value, "ascii")
 			value = wrap(universal_newlines(value.strip()).replace("\t", "\n"),
 						 52).replace("\0", "").split("\n")
@@ -1282,7 +1282,7 @@ class ProfileInfoFrame(LUTFrame):
 			label = universal_newlines(label).split("\n")
 			while len(label) < linecount:
 				label.append("")
-			lines.extend(zip(label, value))
+			lines.extend(list(zip(label, value)))
 		for i, line in enumerate(lines):
 			line = list(line)
 			indent = re.match("\s+", line[0])
@@ -1291,7 +1291,7 @@ class ProfileInfoFrame(LUTFrame):
 					continue
 				key = re.sub("[^0-9A-Za-z]+", "_",
 							 strtr(line[j],
-								   {u"\u0394E": "Delta E"}).lower().strip(), 0).strip("_")
+								   {"\u0394E": "Delta E"}).lower().strip(), 0).strip("_")
 				val = lang.getstr(key)
 				if key != val:
 					line[j] = val
@@ -1442,12 +1442,12 @@ class ProfileInfoFrame(LUTFrame):
 						locus = {"Blackbody": "blackbody",
 								 "Daylight": "daylight"}.get(page.whitepoint_select.GetStringSelection(),
 															 page.whitepoint_select.GetStringSelection())
-						status = u"%s, CCT %i (%s %.2f)" % (
+						status = "%s, CCT %i (%s %.2f)" % (
 							format % xy, cct, lang.getstr("delta_e_to_locus", 
 														  locus),
 							delta["E"])
 					else:
-						status = u"%s, CCT %i" % (format % xy, cct)
+						status = "%s, CCT %i" % (format % xy, cct)
 				self.SetStatusText(status)
 			else:
 				self.SetStatusText(format % xy)
@@ -1661,7 +1661,7 @@ class ProfileInfoFrame(LUTFrame):
 				return
 			try:
 				profile = ICCP.ICCProfile(path)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
 										 path), self)
 			else:

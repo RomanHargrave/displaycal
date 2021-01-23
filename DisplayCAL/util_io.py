@@ -6,7 +6,7 @@ import operator
 import os
 import sys
 import tarfile
-from StringIO import StringIO
+from io import StringIO
 from time import time
 
 from safe_print import safe_print
@@ -34,9 +34,9 @@ class EncodedWriter(object):
 		return getattr(self.file, name)
 
 	def write(self, data):
-		if self.data_encoding and not isinstance(data, unicode):
+		if self.data_encoding and not isinstance(data, str):
 			data = data.decode(self.data_encoding, self.errors)
-		if self.file_encoding and isinstance(data, unicode):
+		if self.file_encoding and isinstance(data, str):
 			data = data.encode(self.file_encoding, self.errors)
 		self.file.write(data)
 
@@ -57,7 +57,7 @@ class Files():
 		"""
 		self.files = []
 		for item in files:
-			if isinstance(item, basestring):
+			if isinstance(item, str):
 				self.files.append(open(item, mode))
 			else:
 				self.files.append(item)
@@ -114,7 +114,7 @@ class GzipFileProper(gzip.GzipFile):
 		if fname:
 			flags = gzip.FNAME
 		self.fileobj.write(chr(flags))
-		gzip.write32u(self.fileobj, long(time()))
+		gzip.write32u(self.fileobj, int(time()))
 		self.fileobj.write('\002')
 		self.fileobj.write('\377')
 		if fname:
@@ -160,7 +160,7 @@ class LineBufferedStream():
 	
 	def commit(self):
 		if self.buf:
-			if self.data_encoding and not isinstance(self.buf, unicode):
+			if self.data_encoding and not isinstance(self.buf, str):
 				self.buf = self.buf.decode(self.data_encoding, self.errors)
 			if self.file_encoding:
 				self.buf = self.buf.encode(self.file_encoding, self.errors)
@@ -207,7 +207,7 @@ class LineCache():
 						break
 			if read and line:
 				lines.append(line)
-		return "\n".join(filter(lambda line: line, lines)[-self.maxlines:])
+		return "\n".join([line for line in lines if line][-self.maxlines:])
 	
 	def write(self, data):
 		cache = list(self.cache)
@@ -218,7 +218,7 @@ class LineCache():
 				cache.append("")
 			else:
 				cache[-1] += char
-		self.cache = (filter(lambda line: line, cache[:-1]) + 
+		self.cache = ([line for line in cache[:-1] if line] + 
 					  cache[-1:])[-self.maxlines - 1:]
 
 
@@ -266,7 +266,7 @@ class TarFileProper(tarfile.TarFile):
 		"""
 		self._check("r")
 
-		if isinstance(member, basestring):
+		if isinstance(member, str):
 			tarinfo = self.getmember(member)
 		else:
 			tarinfo = member
@@ -283,7 +283,7 @@ class TarFileProper(tarfile.TarFile):
 			if not full:
 				name = os.path.basename(name)
 			self._extract_member(tarinfo, os.path.join(path, name))
-		except EnvironmentError, e:
+		except EnvironmentError as e:
 			if self.errorlevel > 0:
 				raise
 			else:
@@ -291,7 +291,7 @@ class TarFileProper(tarfile.TarFile):
 					self._dbg(1, "tarfile: %s" % e.strerror)
 				else:
 					self._dbg(1, "tarfile: %s %r" % (e.strerror, e.filename))
-		except ExtractError, e:
+		except ExtractError as e:
 			if self.errorlevel > 1:
 				raise
 			else:
@@ -314,7 +314,7 @@ class TarFileProper(tarfile.TarFile):
 				# Extract directories with a safe mode.
 				directories.append(tarinfo)
 				tarinfo = copy.copy(tarinfo)
-				tarinfo.mode = 0700
+				tarinfo.mode = 0o700
 			self.extract(tarinfo, path, full)
 
 		# Reverse sort directories.
@@ -331,7 +331,7 @@ class TarFileProper(tarfile.TarFile):
 				self.chown(tarinfo, dirpath)
 				self.utime(tarinfo, dirpath)
 				self.chmod(tarinfo, dirpath)
-			except ExtractError, e:
+			except ExtractError as e:
 				if self.errorlevel > 1:
 					raise
 				else:

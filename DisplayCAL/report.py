@@ -26,14 +26,14 @@ def create(report_path, placeholders2data, pack=True, templatename="report"):
 	try:
 		report_html_template = codecs.open(report_html_template_path, "r", 
 										   "UTF-8")
-	except (IOError, OSError), exception:
+	except (IOError, OSError) as exception:
 		raise exception.__class__(lang.getstr("error.file.open", 
 											  report_html_template_path))
 	report_html = report_html_template.read()
 	report_html_template.close()
 	
 	# create report
-	for placeholder, data in placeholders2data.iteritems():
+	for placeholder, data in placeholders2data.items():
 		report_html = report_html.replace(placeholder, data)
 	
 	for include in ("base.css", "compare.css", "print.css", 
@@ -46,7 +46,7 @@ def create(report_path, placeholders2data, pack=True, templatename="report"):
 			raise IOError(lang.getstr("file.missing", include))
 		try:
 			f = codecs.open(path, "r", "UTF-8")
-		except (IOError, OSError), exception:
+		except (IOError, OSError) as exception:
 			raise exception.__class__(lang.getstr("error.file.open", path))
 		if include.endswith(".js"):
 			js = f.read()
@@ -65,7 +65,7 @@ def create(report_path, placeholders2data, pack=True, templatename="report"):
 	# write report
 	try:
 		report_html_file = codecs.open(report_path, "w", "UTF-8")
-	except (IOError, OSError), exception:
+	except (IOError, OSError) as exception:
 		raise exception.__class__(lang.getstr("error.file.create", report_path) +
 								  "\n\n" + safe_unicode(exception))
 	report_html_file.write(report_html)
@@ -81,7 +81,7 @@ def update(report_path, pack=True):
 	# read original report
 	try:
 		orig_report = codecs.open(report_path, "r", "UTF-8")
-	except (IOError, OSError), exception:
+	except (IOError, OSError) as exception:
 		raise exception.__class__(lang.getstr("error.file.open", report_path))
 	orig_report_html = orig_report.read()
 	orig_report.close()
@@ -131,8 +131,8 @@ def update(report_path, pack=True):
 			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M),
 			("${REPORT_TYPE}", '<title>(.+?) Report', 0),
 			# Uniformity report
-			("${DISPLAY}", u"\u2014 (.+?) \u2014", 0),
-			("${DATETIME}", u"\u2014 .+? \u2014 (.+?)</title>", 0),
+			("${DISPLAY}", "\u2014 (.+?) \u2014", 0),
+			("${DATETIME}", "\u2014 .+? \u2014 (.+?)</title>", 0),
 			("${ROWS}", 'rows\s*=\s*(.+?)[;,]', 0),
 			("${COLS}", 'cols\s*=\s*(.+?)[;,]', 0),
 			("${RESULTS}", 'results\s*=\s*(.+?), locus = ', 0),
@@ -181,5 +181,5 @@ if __name__ == "__main__":
 		for arg in sys.argv[1:]:
 			try:
 				update(arg)
-			except (IOError, OSError), exception:
+			except (IOError, OSError) as exception:
 				safe_print(exception)

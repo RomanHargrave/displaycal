@@ -4,8 +4,8 @@
 Runtime configuration and user settings parser
 """
 
-import ConfigParser
-ConfigParser.DEFAULTSECT = "Default"
+import configparser
+configparser.DEFAULTSECT = "Default"
 from decimal import Decimal
 import locale
 import math
@@ -15,7 +15,7 @@ import string
 import sys
 from time import gmtime, strftime, timezone
 if sys.platform == "win32":
-	import _winreg
+	import winreg
 
 from argyll_names import observers, viewconds, intents, video_encodings
 from defaultpaths import appdata, commonappdata
@@ -44,7 +44,7 @@ import encodedstdio
 if ascii:
 	enc = "ASCII"
 
-exe = unicode(sys.executable, fs_enc)
+exe = str(sys.executable, fs_enc)
 exedir = os.path.dirname(exe)
 exename = os.path.basename(exe)
 
@@ -55,7 +55,7 @@ if isexe and os.getenv("_MEIPASS2"):
 
 pyfile = (exe if isexe else (os.path.isfile(sys.argv[0]) and sys.argv[0]) or
 		  os.path.join(os.path.dirname(__file__), "main.py"))
-pypath = exe if isexe else os.path.abspath(unicode(pyfile, fs_enc))
+pypath = exe if isexe else os.path.abspath(str(pyfile, fs_enc))
 # Mac OS X: isapp should only be true for standalone, not 0install
 isapp = sys.platform == "darwin" and \
 		exe.split(os.path.sep)[-3:-1] == ["Contents", "MacOS"] and \
@@ -66,7 +66,7 @@ if isapp:
 else:
 	pyname, pyext = os.path.splitext(os.path.basename(pypath))
 	pydir = os.path.dirname(exe if isexe
-							else os.path.abspath(unicode(__file__, fs_enc)))
+							else os.path.abspath(str(__file__, fs_enc)))
 
 data_dirs = [pydir]
 extra_data_dirs = []
@@ -187,7 +187,7 @@ virtual_displays = untethered_displays + ("madVR$", )
 
 
 def is_special_display(display=None, tests=virtual_displays):
-	if not isinstance(display, basestring):
+	if not isinstance(display, str):
 		display = get_display_name(display)
 	for test in tests:
 		if re.match(test, display):
@@ -247,7 +247,7 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 			size = parts[-2].split("x")
 			if len(size) == 2:
 				try:
-					w, h = map(int, size)
+					w, h = list(map(int, size))
 				except ValueError:
 					size = []
 		ow, oh = w, h
@@ -284,7 +284,7 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 			name2x = oname + "@2x"
 			name4x = oname + "@4x"
 			path = None
-			for i in xrange(5):
+			for i in range(5):
 				if scale > 1:
 					if len(size) == 2:
 						# Icon
@@ -512,7 +512,7 @@ def get_display_number(display_no):
 	else:
 		if display.endswith(" [PRIMARY]"):
 			display = " ".join(display.split(" ")[:-1])
-		for i in xrange(wx.Display.GetCount()):
+		for i in range(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
 			if display.endswith("@ " + geometry):
 				if debug:
@@ -588,7 +588,7 @@ def get_data_path(relpath, rex=None):
 	
 	"""
 	if (not relpath or relpath.endswith(os.path.sep) or
-		(isinstance(os.path.altsep, basestring) and
+		(isinstance(os.path.altsep, str) and
 		 relpath.endswith(os.path.altsep))):
 		return None
 	dirs = list(data_dirs)
@@ -618,8 +618,8 @@ def get_data_path(relpath, rex=None):
 			if os.path.isdir(curpath):
 				try:
 					filelist = listdir_re(curpath, rex)
-				except Exception, exception:
-					safe_print(u"Error - directory '%s' listing failed: %s" % 
+				except Exception as exception:
+					safe_print("Error - directory '%s' listing failed: %s" % 
 							   tuple(safe_unicode(s) for s in (curpath, exception)))
 				else:
 					for filename in filelist:
@@ -675,8 +675,8 @@ def runtimeconfig(pyfile):
 			data_dirs.insert(1, pydir_parent)
 		runtype = pyext
 	for dir_ in sys.path:
-		if not isinstance(dir_, unicode):
-			dir_ = unicode(dir_, fs_enc)
+		if not isinstance(dir_, str):
+			dir_ = str(dir_, fs_enc)
 		dir_ = os.path.abspath(os.path.join(dir_, appname))
 		if dir_ not in data_dirs and os.path.isdir(dir_):
 			data_dirs.append(dir_)
@@ -702,7 +702,7 @@ def runtimeconfig(pyfile):
 
 # User settings
 
-cfg = ConfigParser.RawConfigParser()
+cfg = configparser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
@@ -721,7 +721,7 @@ valid_ranges = {
 	# luminance, but we assume it already *is*
 	# the adapting luminance. To correct for this,
 	# scale so that dispcal gets the correct value.
-	"calibration.ambient_viewcond_adjust.lux": [0.0, sys.maxint / 5.0],
+	"calibration.ambient_viewcond_adjust.lux": [0.0, sys.maxsize / 5.0],
 	"calibration.black_luminance": [0.000001, 10],
 	"calibration.black_output_offset": [0, 1],
 	"calibration.black_point_correction": [0, 1],
@@ -759,8 +759,7 @@ valid_values = {
 	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
 	"3dlut.encoding.input": list(video_encodings),
 	# collink: xvYCC output encoding is not supported
-	"3dlut.encoding.output": filter(lambda v: v not in ("T", "x", "X"),
-									video_encodings),
+	"3dlut.encoding.output": [v for v in video_encodings if v not in ("T", "x", "X")],
 	"3dlut.format": ["3dl", "cube", "dcl", "eeColor", "icc", "madVR", "mga",
 					 "png", "ReShade", "spi3d"],
 	"3dlut.hdr_display": [0, 1],
@@ -810,7 +809,7 @@ valid_values = {
 							   "IPT", "LCH(ab)", "LCH(uv)", "Lab", "Lpt", "Luv",
 							   "Lu'v'", "xyY"],
 	"tc_vrml_device_colorspace": ["HSI", "HSL", "HSV", "RGB"],
-	"testchart.auto_optimize": range(19),
+	"testchart.auto_optimize": list(range(19)),
 	"testchart.patch_sequence": ["optimize_display_response_delay",
 								 "maximize_lightness_difference",
 								 "maximize_rec709_luma_difference",
@@ -956,19 +955,19 @@ defaults = {
 	"gamma": 2.2,
 	"iccgamut.surface_detail": 10.0,
 	"instruments": "",
-	"last_3dlut_path": u"",
-	"last_archive_save_path": u"",
-	"last_cal_path": u"",
-	"last_cal_or_icc_path": u"",
-	"last_colorimeter_ti3_path": u"",
-	"last_testchart_export_path": u"",
-	"last_filedialog_path": u"",
-	"last_icc_path": u"",
+	"last_3dlut_path": "",
+	"last_archive_save_path": "",
+	"last_cal_path": "",
+	"last_cal_or_icc_path": "",
+	"last_colorimeter_ti3_path": "",
+	"last_testchart_export_path": "",
+	"last_filedialog_path": "",
+	"last_icc_path": "",
 	"last_launch": "99",  # Version
-	"last_reference_ti3_path": u"",
-	"last_ti1_path": u"",
-	"last_ti3_path": u"",
-	"last_vrml_path": u"",
+	"last_reference_ti3_path": "",
+	"last_ti1_path": "",
+	"last_ti3_path": "",
+	"last_vrml_path": "",
 	"log.autoshow": 0,
 	"log.show": 0,
 	"lang": "en",
@@ -999,7 +998,7 @@ defaults = {
 	"measurement_report.use_devlink_profile": 0,
 	"measurement_report.use_simulation_profile": 0,
 	"measurement_report.use_simulation_profile_as_output": 0,
-	"measurement.name.expanded": u"",
+	"measurement.name.expanded": "",
 	"measurement.play_sound": 1,
 	"measurement.save_path": expanduseru("~"),
 	"measure.darken_background": 0,
@@ -1062,19 +1061,19 @@ defaults = {
 								else "u",  # Linux, OSX
 	"profile.license": "Public Domain",
 	"profile.load_on_login": 1,
-	"profile.name": u" ".join([
-		u"%dns",
-		u"%out",
-		u"%Y-%m-%d %H-%M",
-		u"%cb",
-		u"%wp",
-		u"%cB",
-		u"%ck",
-		u"%cg",
-		u"%cq-%pq",
-		u"%pt"
+	"profile.name": " ".join([
+		"%dns",
+		"%out",
+		"%Y-%m-%d %H-%M",
+		"%cb",
+		"%wp",
+		"%cB",
+		"%ck",
+		"%cg",
+		"%cq-%pq",
+		"%pt"
 	]),
-	"profile.name.expanded": u"",
+	"profile.name.expanded": "",
 	"profile.quality": "h",
 	"profile.quality.b2a": "h",
 	"profile.b2a.hires": 1,
@@ -1251,8 +1250,8 @@ testchart_defaults = {
 }
 
 def _init_testcharts():
-	for testcharts in testchart_defaults.values():
-		for chart in filter(lambda value: value != "auto", testcharts.values()):
+	for testcharts in list(testchart_defaults.values()):
+		for chart in [value for value in list(testcharts.values()) if value != "auto"]:
 			resfiles.append(os.path.join("ti1", chart))
 	testchart_defaults["G"] = testchart_defaults["g"]
 	testchart_defaults["S"] = testchart_defaults["s"]
@@ -1275,9 +1274,9 @@ def getcfg(name, fallback=True, raw=False, cfg=cfg):
 	if hasdef:
 		defval = defaults[name]
 		deftype = type(defval)
-	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
+	if cfg.has_option(configparser.DEFAULTSECT, name):
 		try:
-			value = unicode(cfg.get(ConfigParser.DEFAULTSECT, name), "UTF-8")
+			value = str(cfg.get(configparser.DEFAULTSECT, name), "UTF-8")
 		except UnicodeDecodeError:
 			pass
 		else:
@@ -1316,7 +1315,7 @@ def getcfg(name, fallback=True, raw=False, cfg=cfg):
 				value = "g"
 			elif name in valid_values and value not in valid_values[name]:
 				if debug:
-					print "Invalid config value for %s: %s" % (name, value),
+					print("Invalid config value for %s: %s" % (name, value), end=' ')
 				value = None
 			elif name == "copyright":
 				# Make sure DisplayCAL and Argyll version are up-to-date
@@ -1347,13 +1346,13 @@ def getcfg(name, fallback=True, raw=False, cfg=cfg):
 		if hasdef and fallback:
 			value = defval
 			if debug > 1:
-				print name, "- falling back to", value
+				print(name, "- falling back to", value)
 		else:
 			if debug and not hasdef: 
-				print "Warning - unknown option:", name
+				print("Warning - unknown option:", name)
 	if raw:
 		return value
-	if (value and isinstance(value, basestring) and
+	if (value and isinstance(value, str) and
 		name.endswith("file") and
 		name != "colorimeter_correction_matrix_file" and
 		(name != "testchart.file" or value != "auto") and
@@ -1361,7 +1360,7 @@ def getcfg(name, fallback=True, raw=False, cfg=cfg):
 		# colorimeter_correction_matrix_file is special because it's
 		# not (only) a path
 		if debug:
-			print "%s does not exist: %s" % (name, value),
+			print("%s does not exist: %s" % (name, value), end=' ')
 		# Normalize path (important, this turns altsep into sep under
 		# Windows)
 		value = os.path.normpath(value)
@@ -1378,7 +1377,7 @@ def getcfg(name, fallback=True, raw=False, cfg=cfg):
 		if not value and hasdef:
 			value = defval
 		if debug > 1:
-			print name, "- falling back to", value
+			print(name, "- falling back to", value)
 	elif name in ("displays", "instruments"):
 		if not value:
 			return []
@@ -1396,7 +1395,7 @@ def hascfg(name, fallback=True, cfg=cfg):
 	check defaults also.
 	
 	"""
-	if cfg.has_option(ConfigParser.DEFAULTSECT, name):
+	if cfg.has_option(configparser.DEFAULTSECT, name):
 		return True
 	elif fallback:
 		return name in defaults
@@ -1416,7 +1415,7 @@ def get_current_profile(include_display_profile=False):
 		import ICCProfile as ICCP
 		try:
 			profile = ICCP.ICCProfile(path, use_cache=True)
-		except (IOError, ICCP.ICCProfileInvalidError), exception:
+		except (IOError, ICCP.ICCProfileInvalidError) as exception:
 			return
 		return profile
 	elif include_display_profile:
@@ -1431,7 +1430,7 @@ def get_display_profile(display_no=None):
 	import ICCProfile as ICCP
 	try:
 		return ICCP.get_display_profile(display_no)
-	except Exception, exception:
+	except Exception as exception:
 		from log import _safe_print, log
 		_safe_print("ICCP.get_display_profile(%s):" % display_no, 
 					safe_unicode(exception), fn=log)
@@ -1485,7 +1484,7 @@ def get_standard_profiles(paths_only=False):
 				profile = ICCP.ICCProfile(path, load=False, use_cache=True)
 			except EnvironmentError:
 				pass
-			except Exception, exception:
+			except Exception as exception:
 				safe_print(exception)
 			else:
 				if (profile.version < 4 and
@@ -1612,8 +1611,8 @@ def makecfgdir(which="user", worker=None):
 		if not os.path.exists(confighome):
 			try:
 				os.makedirs(confighome)
-			except Exception, exception:
-				safe_print(u"Warning - could not create configuration directory "
+			except Exception as exception:
+				safe_print("Warning - could not create configuration directory "
 						   "'%s': %s" % (confighome, safe_unicode(exception)))
 				return False
 	elif not os.path.exists(config_sys):
@@ -1630,8 +1629,8 @@ def makecfgdir(which="user", worker=None):
 										 asroot=True)
 				if isinstance(result, Exception):
 					raise result
-		except Exception, exception:
-			safe_print(u"Warning - could not create configuration directory "
+		except Exception as exception:
+			safe_print("Warning - could not create configuration directory "
 					   "'%s': %s" % (config_sys, safe_unicode(exception)))
 			return False
 	return True
@@ -1673,8 +1672,8 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 			if os.path.isfile(cfgfile):
 				try:
 					mtime = os.stat(cfgfile).st_mtime
-				except EnvironmentError, exception:
-					safe_print(u"Warning - os.stat('%s') failed: %s" % 
+				except EnvironmentError as exception:
+					safe_print("Warning - os.stat('%s') failed: %s" % 
 							   tuple(safe_unicode(s) for s in (cfgfile,
 															   exception)))
 				last_checked = cfginited.get(cfgfile)
@@ -1699,12 +1698,12 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 		cfg.read(cfgfiles)
 		# This won't raise an exception if the file does not exist, only
 		# if it can't be parsed
-	except Exception, exception:
+	except Exception as exception:
 		safe_print("Warning - could not parse configuration files:\n%s" %
 				   "\n".join(cfgfiles))
 		# Fix Python 2.7 ConfigParser option values being lists instead of
 		# strings in case of a ParsingError. http://bugs.python.org/issue24142
-		all_sections = [ConfigParser.DEFAULTSECT]
+		all_sections = [configparser.DEFAULTSECT]
 		all_sections.extend(cfg.sections())
 		for section in all_sections:
 			for name, val in cfg.items(section):
@@ -1869,14 +1868,14 @@ def get_hidpi_scaling_factor():
 def setcfg(name, value, cfg=cfg):
 	""" Set an option value in the configuration. """
 	if value is None:
-		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
+		cfg.remove_option(configparser.DEFAULTSECT, name)
 	else:
 		if name in ("displays", "instruments") and isinstance(value, (list,
 																	  tuple)):
 			value = os.pathsep.join(strtr(v, [("%", "%25"),
 											  (os.pathsep,
 											   "%" + hex(ord(os.pathsep))[2:].upper())]) for v in value)
-		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
+		cfg.set(configparser.DEFAULTSECT, name, str(value).encode("UTF-8"))
 
 
 def setcfg_cond(condition, name, value, set_if_backup_exists=False,
@@ -1920,7 +1919,7 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 	else:
 		cfgbasename = appbasename
 	# Remove unknown options
-	for name, val in cfg.items(ConfigParser.DEFAULTSECT):
+	for name, val in cfg.items(configparser.DEFAULTSECT):
 		if not name in defaults:
 			safe_print("Removing unknown option:", name)
 			setcfg(name, None)
@@ -1945,8 +1944,8 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 			cfgfile = open(cfgfilename, "wb")
 			cfgfile.write(os.linesep.join(lines) + os.linesep)
 			cfgfile.close()
-		except Exception, exception:
-			safe_print(u"Warning - could not write user configuration file "
+		except Exception as exception:
+			safe_print("Warning - could not write user configuration file "
 					   "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
 	else:
@@ -1977,8 +1976,8 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 										 asroot=True)
 				if isinstance(result, Exception):
 					raise result
-		except Exception, exception:
-			safe_print(u"Warning - could not write system-wide configuration file "
+		except Exception as exception:
+			safe_print("Warning - could not write system-wide configuration file "
 					   "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
 			return False
 	return True

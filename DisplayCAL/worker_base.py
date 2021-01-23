@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 from binascii import hexlify
 import atexit
 import math
@@ -60,7 +60,7 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 	start = 0
 	num_subchunks = 50
 	subchunksize = float(len(chunk)) / num_subchunks
-	for i in xrange(num_subchunks):
+	for i in range(num_subchunks):
 		if (thread_abort_event is not None and getattr(sys, "_sigbreak", False) and
 			not thread_abort_event.is_set()):
 			thread_abort_event.set()
@@ -91,10 +91,10 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 	
 	"""
 	if debug:
-		safe_print("comtypes?", "comtypes" in str(sys.modules.keys()))
-		safe_print("numpy?", "numpy" in str(sys.modules.keys()))
-		safe_print("wx?", "wx" in str(sys.modules.keys()))
-		safe_print("x3dom?", "x3dom" in str(sys.modules.keys()))
+		safe_print("comtypes?", "comtypes" in str(list(sys.modules.keys())))
+		safe_print("numpy?", "numpy" in str(list(sys.modules.keys())))
+		safe_print("wx?", "wx" in str(list(sys.modules.keys())))
+		safe_print("x3dom?", "x3dom" in str(list(sys.modules.keys())))
 	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
 		config.initcfg()
 	idata = []
@@ -131,8 +131,8 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 				xicclu2.exit()
 			xicclu1.exit()
 			return Info(abortmessage)
-		for b in xrange(clutres):
-			for c in xrange(clutres):
+		for b in range(clutres):
+			for c in range(clutres):
 				d, e, f = [v * step for v in (a, b, c)]
 				if profile.connectionColorSpace == "XYZ":
 					# Apply TRC to XYZ values to distribute them optimally
@@ -148,7 +148,7 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 					##raw_input()
 					if intent == "a":
 						v = colormath.adapt(*v + [XYZwp,
-												  profile.tags.wtpt.ir.values()])
+												  list(profile.tags.wtpt.ir.values())])
 				else:
 					# Legacy CIELAB
 					L = Linterp(d * 100)
@@ -294,11 +294,11 @@ def get_argyll_version_string(name, paths=None):
 		p = sp.Popen([cmd.encode(fs_enc), "-?"], stdin=sp.PIPE,
 					 stdout=sp.PIPE, stderr=sp.STDOUT,
 					 startupinfo=startupinfo)
-	except Exception, exception:
+	except Exception as exception:
 		safe_print(exception)
 		return argyll_version_string
 	for i, line in enumerate((p.communicate()[0] or "").splitlines()):
-		if isinstance(line, basestring):
+		if isinstance(line, str):
 			line = line.strip()
 			if "version" in line.lower():
 				argyll_version_string = line[line.lower().find("version") + 8:]
@@ -323,7 +323,7 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 	if args is None:
 		args = []
 	if cwd is None:
-		cwd = os.getcwdu()
+		cwd = os.getcwd()
 	fn("  " + cmd)
 	i = 0
 	lines = []
@@ -352,7 +352,7 @@ class ThreadAbort(object):
 	def __init__(self):
 		self.event = mp.Event()
 
-	def __nonzero__(self):
+	def __bool__(self):
 		return self.event.is_set()
     
 	def __cmp__(self, other):
@@ -387,8 +387,8 @@ class WorkerBase(object):
 				safe_print(appname + ": Creating a new temporary directory "
 						   "because", msg)
 			try:
-				self.tempdir = tempfile.mkdtemp(prefix=appname + u"-")
-			except Exception, exception:
+				self.tempdir = tempfile.mkdtemp(prefix=appname + "-")
+			except Exception as exception:
 				self.tempdir = None
 				return Error("Error - couldn't create temporary directory: " + 
 							 safe_str(exception))
@@ -591,7 +591,7 @@ class Xicclu(WorkerBase):
 		return VidRGB_to_cLUT65(eeColor_to_VidRGB(n))
 	
 	def __call__(self, idata):
-		if not isinstance(idata, basestring):
+		if not isinstance(idata, str):
 			verbose = self.verbose
 			if self.convert_video_rgb_to_clut65:
 				devi_devip = self.devi_devip
@@ -600,13 +600,13 @@ class Xicclu(WorkerBase):
 			scale = float(self.scale)
 			idata = list(idata)  # Make a copy
 			for i, v in enumerate(idata):
-				if isinstance(v, (float, int, long)):
+				if isinstance(v, (float, int)):
 					self([idata])
 					return
-				if not isinstance(v, basestring):
+				if not isinstance(v, str):
 					if verbose:
 						for n in v:
-							if not isinstance(n, (float, int, long)):
+							if not isinstance(n, (float, int)):
 								raise TypeError("xicclu: Expecting list of "
 												"strings or n-tuples with "
 												"floats")
@@ -688,9 +688,9 @@ class Xicclu(WorkerBase):
 			if self.tempdir and not os.listdir(self.tempdir):
 				try:
 					shutil.rmtree(self.tempdir, True)
-				except Exception, exception:
-					safe_print(u"Warning - temporary directory '%s' could "
-							   u"not be removed: %s" % 
+				except Exception as exception:
+					safe_print("Warning - temporary directory '%s' could "
+							   "not be removed: %s" % 
 							   tuple(safe_unicode(s) for s in 
 									 (self.tempdir, exception)))
 	

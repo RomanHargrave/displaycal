@@ -104,7 +104,7 @@ class CCXXPlot(wx.Frame):
 		else:
 			ccxx_type = "matrix"
 
-		title = u"%s: %s" % (lang.getstr(ccxx_type), desc)
+		title = "%s: %s" % (lang.getstr(ccxx_type), desc)
 
 		if self.is_ccss:
 			# Convert to TI3 so we can get XYZ from spectra for coloring
@@ -134,7 +134,7 @@ class CCXXPlot(wx.Frame):
 				else:
 					try:
 						cgats = CGATS.CGATS(temp_out_path)
-					except Exception, exception:
+					except Exception as exception:
 						show_result_dialog(exception, parent)
 					finally:
 						worker.wrapup(False)
@@ -162,11 +162,11 @@ class CCXXPlot(wx.Frame):
 			y_max = 1
 
 			Y_max = 0
-			for i, sample in data.iteritems():
+			for i, sample in data.items():
 				# Get nm and spectral power
 				values = []
 				x = x_min
-				for k in data_format.itervalues():
+				for k in data_format.values():
 					if k.startswith("SPEC_"):
 						y = sample[k]
 						y_min = min(y, y_min)
@@ -182,7 +182,7 @@ class CCXXPlot(wx.Frame):
 					numvalues = len(values)
 					interp = ICCP.CRInterpolation(values)
 					values = []
-					for i in xrange(steps):
+					for i in range(steps):
 						values.append((x, interp(i / (steps - 1.) * (numvalues - 1.))))
 						x += step
 				# Get XYZ for colorization
@@ -208,8 +208,8 @@ class CCXXPlot(wx.Frame):
 			y_min = 0
 
 			mtx = colormath.Matrix3x3([[sample[k]
-										for k in data_format.itervalues()]
-									   for sample in data.itervalues()])
+										for k in data_format.values()]
+									   for sample in data.values()])
 			imtx = mtx.inverted()
 
 			# Get XYZ that colorimeter would measure without matrix (sRGB ref,
@@ -237,11 +237,11 @@ class CCXXPlot(wx.Frame):
 				y_max = 100
 				y = -5
 				pos2rgb = []
-				for R in xrange(cube_size):
-					for G in xrange(cube_size):
+				for R in range(cube_size):
+					for G in range(cube_size):
 						x = -5
 						y += 10
-						for B in xrange(cube_size):
+						for B in range(cube_size):
 							x += 10
 							pos2rgb.append(((x, y),
 											(v / (cube_size - 1.0) for v in (R, G, B))))
@@ -320,13 +320,13 @@ class CCXXPlot(wx.Frame):
 			for observer in config.valid_values["observer"]:
 				observers_ab[observer] = lang.getstr("observer." + observer)
 			x_label = [lang.getstr("matrix")]
-			x_label.extend([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
+			x_label.extend(["%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
 			if ref:
 				ref_observer = cgats.queryv1("REFERENCE_OBSERVER")
 				if ref_observer:
-					ref += u", " + observers_ab.get(ref_observer,
+					ref += ", " + observers_ab.get(ref_observer,
 													ref_observer)
-				x_label.append(u"")
+				x_label.append("")
 				x_label.append(ref)
 			fit_method = cgats.queryv1("FIT_METHOD")
 			if fit_method == "xy":
@@ -343,19 +343,19 @@ class CCXXPlot(wx.Frame):
 				x_label.append(fit_method)
 			fit_de00 = []
 			if fit_de00_avg:
-				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.avg"),
+				fit_de00.append("ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.avg"),
 													fit_de00_avg))
 			if fit_de00_max:
-				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.max"),
+				fit_de00.append("ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.max"),
 													fit_de00_max))
 			if fit_de00:
-				x_label.append(u"\n".join(fit_de00))
+				x_label.append("\n".join(fit_de00))
 			x_label = "\n".join(x_label)
 		else:
-			x_label = u""
+			x_label = ""
 			if ref:
-				x_label += ref + u", "
-			x_label += u"%.1fnm, %i-%inm" % ((x_max - x_min) / (bands - 1.0),
+				x_label += ref + ", "
+			x_label += "%.1fnm, %i-%inm" % ((x_max - x_min) / (bands - 1.0),
 											 x_min, x_max)
 
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
@@ -456,7 +456,7 @@ class CCXXPlot(wx.Frame):
 		else:
 			event.Skip()
 
-	def draw(self, objects, title="", xlabel=u" ", ylabel=u" "):
+	def draw(self, objects, title="", xlabel=" ", ylabel=" "):
 		""" Draw objects to plot """
 		graphics = plot.PlotGraphics(objects, title, xlabel, ylabel)
 		self.canvas.Draw(graphics, self.canvas.axis_x, self.canvas.axis_y)
@@ -474,7 +474,7 @@ class CCXXPlot(wx.Frame):
 			self.canvas.spec_y = self.spec_y
 			self.canvas.SetXSpec(self.spec_x)
 			self.canvas.SetYSpec(self.spec_y)
-		self.draw(self.gfx, u" ")
+		self.draw(self.gfx, " ")
 
 	def draw_cie(self):
 		""" CIE 1931 2° xy plot """
@@ -516,14 +516,14 @@ class CCXXPlot(wx.Frame):
 									  size=2,
 									  width=1.75,
 									  marker="plus",
-									  legend=u"%.4f\u2009x\u2002%.4f\u2009y" % xy))
+									  legend="%.4f\u2009x\u2002%.4f\u2009y" % xy))
 		self.canvas.axis_x = 0, 1
 		self.canvas.axis_y = 0, 1
 		self.canvas.spec_x = 10
 		self.canvas.spec_y = 10
 		self.canvas.SetXSpec(10)
 		self.canvas.SetYSpec(10)
-		self.draw(gfx, u" ", "x", "y")
+		self.draw(gfx, " ", "x", "y")
 
 	def toggle_draw(self, event):
 		""" Toggle between spectral and CIE plot """

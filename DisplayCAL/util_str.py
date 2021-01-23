@@ -22,199 +22,199 @@ from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
 
-ascii_printable = "".join([getattr(string, name) for name in "digits", 
-						   "ascii_letters", "punctuation", "whitespace"])
+ascii_printable = "".join([getattr(string, name) for name in ("digits", 
+						   "ascii_letters", "punctuation", "whitespace")])
 
 # Control chars are defined as charcodes in the decimal range 0-31 (inclusive) 
 # except whitespace characters, plus charcode 127 (DEL)
-control_chars = "".join([chr(i) for i in range(0, 9) + range(14, 32) + [127]])
+control_chars = "".join([chr(i) for i in list(range(0, 9)) + list(range(14, 32)) + [127]])
 
 # Safe character substitution - can be used for filenames
 # i.e. no \/:*?"<>| will be added through substitution
 # Contains only chars that are not normalizable
 safesubst = {# Latin-1 supplement
-			 u"\u00a2": u"c", # Cent sign
-			 u"\u00a3": u"GBP", # Pound sign
-			 u"\u00a5": u"JPY", # Yen sign
-			 u"\u00a9": u"(C)", # U+00A9 copyright sign
-			 u"\u00ac": u"!", # Not sign
-			 u"\u00ae": u"(R)", # U+00AE registered sign
-			 u"\u00b0": u"deg", # Degree symbol
-			 u"\u00b1": u"+-",
-			 u"\u00c4": u"Ae", # Capital letter A with diaresis (Umlaut)
-			 u"\u00c5": u"Aa", # Capital letter A with ring above
-			 u"\u00c6": u"AE",
-			 u"\u00d6": u"Oe", # Capital letter O with diaresis (Umlaut)
-			 u"\u00dc": u"Ue", # Capital letter U with diaresis (Umlaut)
-			 u"\u00d7": u"x", # U+00D7 multiplication sign
-			 u"\u00df": u"ss",
-			 u"\u00e4": u"ae", # Small letter a with diaresis (Umlaut)
-			 u"\u00e5": u"aa", # Small letter a with ring above
-			 u"\u00e6": u"ae",
-			 u"\u00f6": u"oe", # Small letter o with diaresis (Umlaut)
-			 u"\u00fc": u"ue", # Small letter u with diaresis (Umlaut)
+			 "\u00a2": "c", # Cent sign
+			 "\u00a3": "GBP", # Pound sign
+			 "\u00a5": "JPY", # Yen sign
+			 "\u00a9": "(C)", # U+00A9 copyright sign
+			 "\u00ac": "!", # Not sign
+			 "\u00ae": "(R)", # U+00AE registered sign
+			 "\u00b0": "deg", # Degree symbol
+			 "\u00b1": "+-",
+			 "\u00c4": "Ae", # Capital letter A with diaresis (Umlaut)
+			 "\u00c5": "Aa", # Capital letter A with ring above
+			 "\u00c6": "AE",
+			 "\u00d6": "Oe", # Capital letter O with diaresis (Umlaut)
+			 "\u00dc": "Ue", # Capital letter U with diaresis (Umlaut)
+			 "\u00d7": "x", # U+00D7 multiplication sign
+			 "\u00df": "ss",
+			 "\u00e4": "ae", # Small letter a with diaresis (Umlaut)
+			 "\u00e5": "aa", # Small letter a with ring above
+			 "\u00e6": "ae",
+			 "\u00f6": "oe", # Small letter o with diaresis (Umlaut)
+			 "\u00fc": "ue", # Small letter u with diaresis (Umlaut)
 			 # Latin extended A
-			 u"\u0152": u"OE",
-			 u"\u0153": u"oe",
+			 "\u0152": "OE",
+			 "\u0153": "oe",
 			 # General punctuation
-			 u"\u2010": u"-",
-			 u"\u2011": u"-",
-			 u"\u2012": u"-",
-			 u"\u2013": u"-", # U+2013 en dash
-			 u"\u2014": u"--", # U+2014 em dash
-			 u"\u2015": u"---", # U+2015 horizontal bar
-			 u"\u2018": u"'",
-			 u"\u2019": u"'",
-			 u"\u201a": u",",
-			 u"\u201b": u"'",
-			 u"\u201c": u"''",
-			 u"\u201d": u"''",
-			 u"\u201e": u",,",
-			 u"\u201f": u"''",
-			 u"\u2032": u"'",
-			 u"\u2033": u"''",
-			 u"\u2034": u"'''",
-			 u"\u2035": u"'",
-			 u"\u2036": u"''",
-			 u"\u2037": u"'''",
-			 u"\u2053": u"~",
+			 "\u2010": "-",
+			 "\u2011": "-",
+			 "\u2012": "-",
+			 "\u2013": "-", # U+2013 en dash
+			 "\u2014": "--", # U+2014 em dash
+			 "\u2015": "---", # U+2015 horizontal bar
+			 "\u2018": "'",
+			 "\u2019": "'",
+			 "\u201a": ",",
+			 "\u201b": "'",
+			 "\u201c": "''",
+			 "\u201d": "''",
+			 "\u201e": ",,",
+			 "\u201f": "''",
+			 "\u2032": "'",
+			 "\u2033": "''",
+			 "\u2034": "'''",
+			 "\u2035": "'",
+			 "\u2036": "''",
+			 "\u2037": "'''",
+			 "\u2053": "~",
 			 # Superscripts and subscripts
-			 u"\u207b": u"-", # Superscript minus
-			 u"\u208b": u"-", # Subscript minus
+			 "\u207b": "-", # Superscript minus
+			 "\u208b": "-", # Subscript minus
 			 # Currency symbols
-			 u"\u20a1": u"CRC", # Costa Rica 'Colon'
-			 u"\u20a6": u"NGN", # Nigeria 'Naira'
-			 u"\u20a9": u"KRW", # South Korea 'Won'
-			 u"\u20aa": u"ILS", # Isreael 'Sheqel'
-			 u"\u20ab": u"VND", # Vietnam 'Dong'
-			 u"\u20ac": u"EUR",
-			 u"\u20ad": u"LAK", # Laos 'Kip'
-			 u"\u20ae": u"MNT", # Mongolia 'Tugrik'
-			 u"\u20b2": u"PYG", # Paraguay 'Guarani'
-			 u"\u20b4": u"UAH", # Ukraine 'Hryvnja'
-			 u"\u20b5": u"GHS", # Ghana 'Cedi'
-			 u"\u20b8": u"KZT", # Kasachstan 'Tenge'
-			 u"\u20b9": u"INR", # Indian 'Rupee'
-			 u"\u20ba": u"TRY", # Turkey 'Lira'
-			 u"\u20bc": u"AZN", # Aserbaidchan 'Manat'
-			 u"\u20bd": u"RUB", # Russia 'Ruble'
-			 u"\u20be": u"GEL", # Georgia 'Lari'
+			 "\u20a1": "CRC", # Costa Rica 'Colon'
+			 "\u20a6": "NGN", # Nigeria 'Naira'
+			 "\u20a9": "KRW", # South Korea 'Won'
+			 "\u20aa": "ILS", # Isreael 'Sheqel'
+			 "\u20ab": "VND", # Vietnam 'Dong'
+			 "\u20ac": "EUR",
+			 "\u20ad": "LAK", # Laos 'Kip'
+			 "\u20ae": "MNT", # Mongolia 'Tugrik'
+			 "\u20b2": "PYG", # Paraguay 'Guarani'
+			 "\u20b4": "UAH", # Ukraine 'Hryvnja'
+			 "\u20b5": "GHS", # Ghana 'Cedi'
+			 "\u20b8": "KZT", # Kasachstan 'Tenge'
+			 "\u20b9": "INR", # Indian 'Rupee'
+			 "\u20ba": "TRY", # Turkey 'Lira'
+			 "\u20bc": "AZN", # Aserbaidchan 'Manat'
+			 "\u20bd": "RUB", # Russia 'Ruble'
+			 "\u20be": "GEL", # Georgia 'Lari'
 			 # Letter-like symbols
-			 u"\u2117": u"(P)",
+			 "\u2117": "(P)",
 			 # Mathematical operators
-			 u"\u2212": u"-", # U+2212 minus sign
-			 u"\u2260": u"!=",
+			 "\u2212": "-", # U+2212 minus sign
+			 "\u2260": "!=",
 			 # Enclosed alphanumerics
-			 u"\u2460": u"(1)",
-			 u"\u2461": u"(2)",
-			 u"\u2462": u"(3)",
-			 u"\u2463": u"(4)",
-			 u"\u2464": u"(5)",
-			 u"\u2465": u"(6)",
-			 u"\u2466": u"(7)",
-			 u"\u2467": u"(8)",
-			 u"\u2468": u"(9)",
-			 u"\u2469": u"(10)",
-			 u"\u246a": u"(11)",
-			 u"\u246b": u"(12)",
-			 u"\u246c": u"(13)",
-			 u"\u246d": u"(14)",
-			 u"\u246e": u"(15)",
-			 u"\u246f": u"(16)",
-			 u"\u2470": u"(17)",
-			 u"\u2471": u"(18)",
-			 u"\u2472": u"(19)",
-			 u"\u2473": u"(20)",
-			 u"\u24eb": u"(11)",
-			 u"\u24ec": u"(12)",
-			 u"\u24ed": u"(13)",
-			 u"\u24ee": u"(14)",
-			 u"\u24ef": u"(15)",
-			 u"\u24f0": u"(16)",
-			 u"\u24f1": u"(17)",
-			 u"\u24f2": u"(18)",
-			 u"\u24f3": u"(19)",
-			 u"\u24f4": u"(20)",
-			 u"\u24f5": u"(1)",
-			 u"\u24f6": u"(2)",
-			 u"\u24f7": u"(3)",
-			 u"\u24f8": u"(4)",
-			 u"\u24f9": u"(5)",
-			 u"\u24fa": u"(6)",
-			 u"\u24fb": u"(7)",
-			 u"\u24fc": u"(8)",
-			 u"\u24fd": u"(9)",
-			 u"\u24fe": u"(10)",
-			 u"\u24ff": u"(0)",
+			 "\u2460": "(1)",
+			 "\u2461": "(2)",
+			 "\u2462": "(3)",
+			 "\u2463": "(4)",
+			 "\u2464": "(5)",
+			 "\u2465": "(6)",
+			 "\u2466": "(7)",
+			 "\u2467": "(8)",
+			 "\u2468": "(9)",
+			 "\u2469": "(10)",
+			 "\u246a": "(11)",
+			 "\u246b": "(12)",
+			 "\u246c": "(13)",
+			 "\u246d": "(14)",
+			 "\u246e": "(15)",
+			 "\u246f": "(16)",
+			 "\u2470": "(17)",
+			 "\u2471": "(18)",
+			 "\u2472": "(19)",
+			 "\u2473": "(20)",
+			 "\u24eb": "(11)",
+			 "\u24ec": "(12)",
+			 "\u24ed": "(13)",
+			 "\u24ee": "(14)",
+			 "\u24ef": "(15)",
+			 "\u24f0": "(16)",
+			 "\u24f1": "(17)",
+			 "\u24f2": "(18)",
+			 "\u24f3": "(19)",
+			 "\u24f4": "(20)",
+			 "\u24f5": "(1)",
+			 "\u24f6": "(2)",
+			 "\u24f7": "(3)",
+			 "\u24f8": "(4)",
+			 "\u24f9": "(5)",
+			 "\u24fa": "(6)",
+			 "\u24fb": "(7)",
+			 "\u24fc": "(8)",
+			 "\u24fd": "(9)",
+			 "\u24fe": "(10)",
+			 "\u24ff": "(0)",
 			 # Dingbats
-			 u"\u2776": u"(1)",
-			 u"\u2777": u"(2)",
-			 u"\u2778": u"(3)",
-			 u"\u2779": u"(4)",
-			 u"\u277a": u"(5)",
-			 u"\u277b": u"(6)",
-			 u"\u277c": u"(7)",
-			 u"\u277d": u"(8)",
-			 u"\u277e": u"(9)",
-			 u"\u277f": u"(10)",
-			 u"\u2780": u"(1)",
-			 u"\u2781": u"(2)",
-			 u"\u2782": u"(3)",
-			 u"\u2783": u"(4)",
-			 u"\u2784": u"(5)",
-			 u"\u2785": u"(6)",
-			 u"\u2786": u"(7)",
-			 u"\u2787": u"(8)",
-			 u"\u2788": u"(9)",
-			 u"\u2789": u"(10)",
-			 u"\u278a": u"(1)",
-			 u"\u278b": u"(2)",
-			 u"\u278c": u"(3)",
-			 u"\u278d": u"(4)",
-			 u"\u278e": u"(5)",
-			 u"\u278f": u"(6)",
-			 u"\u2790": u"(7)",
-			 u"\u2791": u"(8)",
-			 u"\u2792": u"(9)",
-			 u"\u2793": u"(10)",}
+			 "\u2776": "(1)",
+			 "\u2777": "(2)",
+			 "\u2778": "(3)",
+			 "\u2779": "(4)",
+			 "\u277a": "(5)",
+			 "\u277b": "(6)",
+			 "\u277c": "(7)",
+			 "\u277d": "(8)",
+			 "\u277e": "(9)",
+			 "\u277f": "(10)",
+			 "\u2780": "(1)",
+			 "\u2781": "(2)",
+			 "\u2782": "(3)",
+			 "\u2783": "(4)",
+			 "\u2784": "(5)",
+			 "\u2785": "(6)",
+			 "\u2786": "(7)",
+			 "\u2787": "(8)",
+			 "\u2788": "(9)",
+			 "\u2789": "(10)",
+			 "\u278a": "(1)",
+			 "\u278b": "(2)",
+			 "\u278c": "(3)",
+			 "\u278d": "(4)",
+			 "\u278e": "(5)",
+			 "\u278f": "(6)",
+			 "\u2790": "(7)",
+			 "\u2791": "(8)",
+			 "\u2792": "(9)",
+			 "\u2793": "(10)",}
 
 # Extended character substitution - can NOT be used for filenames
 # Contains only chars that are not normalizable
 subst = dict(safesubst)
 subst.update({# Latin-1 supplement
-			  u"\u00a6": u"|",
-			  u"\u00ab": u"<<",
-			  u"\u00bb": u">>",
-			  u"\u00bc": u"1/4",
-			  u"\u00bd": u"1/2",
-			  u"\u00be": u"3/4",
-			  u"\u00f7": u":",
+			  "\u00a6": "|",
+			  "\u00ab": "<<",
+			  "\u00bb": ">>",
+			  "\u00bc": "1/4",
+			  "\u00bd": "1/2",
+			  "\u00be": "3/4",
+			  "\u00f7": ":",
 			  # General punctuation
-			  u"\u201c": u"\x22",
-			  u"\u201d": u"\x22",
-			  u"\u201f": u"\x22",
-			  u"\u2033": u"\x22",
-			  u"\u2036": u"\x22",
-			  u"\u2039": u"<",
-			  u"\u203a": u">",
-			  u"\u203d": u"!?",
-			  u"\u2044": u"/",
+			  "\u201c": "\x22",
+			  "\u201d": "\x22",
+			  "\u201f": "\x22",
+			  "\u2033": "\x22",
+			  "\u2036": "\x22",
+			  "\u2039": "<",
+			  "\u203a": ">",
+			  "\u203d": "!?",
+			  "\u2044": "/",
 			  # Number forms
-			  u"\u2153": u"1/3",
-			  u"\u2154": u"2/3",
-			  u"\u215b": u"1/8",
-			  u"\u215c": u"3/8",
-			  u"\u215d": u"5/8",
-			  u"\u215e": u"7/8",
+			  "\u2153": "1/3",
+			  "\u2154": "2/3",
+			  "\u215b": "1/8",
+			  "\u215c": "3/8",
+			  "\u215d": "5/8",
+			  "\u215e": "7/8",
 			  # Arrows
-			  u"\u2190": u"<-",
-			  u"\u2192": u"->",
-			  u"\u2194": u"<->",
+			  "\u2190": "<-",
+			  "\u2192": "->",
+			  "\u2194": "<->",
 			  # Mathematical operators
-			  u"\u226a": u"<<",
-			  u"\u226b": u">>",
-			  u"\u2264": u"<=",
-			  u"\u2265": u"=>",})
+			  "\u226a": "<<",
+			  "\u226b": ">>",
+			  "\u2264": "<=",
+			  "\u2265": "=>",})
 
 
 class StrList(list):
@@ -244,10 +244,10 @@ def asciize(obj):
 	as error handler for encode or decode).
 	
 	"""
-	chars = u""
+	chars = ""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
-			chars += subst.get(char, normalencode(char).strip() or u"?")
+			chars += subst.get(char, normalencode(char).strip() or "?")
 		return chars, obj.end
 	else:
 		return obj.encode("ASCII", "asciize")
@@ -263,13 +263,13 @@ def safe_asciize(obj):
 	as error handler for encode or decode).
 	
 	"""
-	chars = u""
+	chars = ""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
 			if char in safesubst:
 				subst_char = safesubst[char]
 			else:
-				subst_char = u"_"
+				subst_char = "_"
 				if char not in subst:
 					subst_char = normalencode(char).strip() or subst_char
 			chars += subst_char
@@ -288,10 +288,10 @@ def escape(obj):
 	as error handler for encode or decode).
 	
 	"""
-	chars = u""
+	chars = ""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
-			chars += subst.get(char, u"\\u%s" % hex(ord(char))[2:].rjust(4, '0'))
+			chars += subst.get(char, "\\u%s" % hex(ord(char))[2:].rjust(4, '0'))
 		return chars, obj.end
 	else:
 		return obj.encode("ASCII", "escape")
@@ -322,9 +322,9 @@ def make_filename_safe(unistr, encoding=fs_enc, subst="_", concat=True):
 	# doesn't exist with Python 3.x which uses the win32 Unicode API)
 	unidec = unistr.encode(encoding, "replace").decode(encoding)
 	# Replace substitution character '?' with ASCII equivalent of original char
-	uniout = u""
+	uniout = ""
 	for i, c in enumerate(unidec):
-		if c == u"?":
+		if c == "?":
 			# Note: We prevent IndexError by using slice notation which will
 			# return an empty string if unistr should be somehow shorter than
 			# unidec. Technically, this should never happen, but who knows
@@ -361,11 +361,11 @@ def box(text, width=80, collapse=False):
 		for line in lines:
 			content_width = max(len(line), content_width)
 		width = content_width + 4
-	horizontal_line = u"\u2500" * (width - 2)
-	box = [u"\u250c%s\u2510" % horizontal_line]
+	horizontal_line = "\u2500" * (width - 2)
+	box = ["\u250c%s\u2510" % horizontal_line]
 	for line in lines:
-		box.append(u"\u2502 %s \u2502" % line.ljust(content_width))
-	box.append(u"\u2514%s\u2518" % horizontal_line)
+		box.append("\u2502 %s \u2502" % line.ljust(content_width))
+	box.append("\u2514%s\u2518" % horizontal_line)
 	return "\n".join(box)
 
 
@@ -407,14 +407,14 @@ def ellipsis(text, maxlen=64, pos="r"):
 	if len(text) <= maxlen:
 		return text
 	if pos == "r":
-		return text[:maxlen - 1] + u"\u2026"
+		return text[:maxlen - 1] + "\u2026"
 	elif pos == "m":
-		return text[:maxlen / 2] + u"\u2026" + text[-maxlen / 2 + 1:]
+		return text[:maxlen / 2] + "\u2026" + text[-maxlen / 2 + 1:]
 
 
 def hexunescape(match):
 	""" To be used with re.sub """
-	return unichr(int(match.group(1), 16))
+	return chr(int(match.group(1), 16))
 
 
 def indent(text, prefix, predicate=None):
@@ -452,7 +452,7 @@ def replace_control_chars(txt, replacement=" ", collapse=False):
 	replacement characters are collapsed to a single one.
 	
 	"""
-	txt = strtr(txt, dict(zip(control_chars, [replacement] * len(control_chars))))
+	txt = strtr(txt, dict(list(zip(control_chars, [replacement] * len(control_chars)))))
 	if collapse:
 		while replacement * 2 in txt:
 			txt = txt.replace(replacement * 2, replacement)
@@ -481,7 +481,7 @@ def safe_basestring(obj):
 		# - pywintypes.error with 'funcname', 'message', 'strerror', 'winerror'
 		#   and 'args' attributes
 		if hasattr(obj, "reason"):
-			if isinstance(obj.reason, basestring):
+			if isinstance(obj.reason, str):
 				obj.args = (obj.reason, )
 			else:
 				obj.args = obj.reason
@@ -508,9 +508,9 @@ def safe_basestring(obj):
 	elif isinstance(obj, KeyError) and obj.args:
 		obj = "Key does not exist: " + repr(obj.args[0])
 	oobj = obj
-	if not isinstance(obj, basestring):
+	if not isinstance(obj, str):
 		try:
-			obj = unicode(obj)
+			obj = str(obj)
 		except UnicodeDecodeError:
 			try:
 				obj = str(obj)
@@ -522,16 +522,16 @@ def safe_basestring(obj):
 		module = getattr(oobj, "__module__", "")
 		package = safe_basestring.__module__.split(".")[0]  # Our own package
 		if not module.startswith(package + "."):
-			clspth = ".".join(filter(None, [module, oobj.__class__.__name__]))
+			clspth = ".".join([_f for _f in [module, oobj.__class__.__name__] if _f])
 			if not obj.startswith(clspth + ":") and obj != clspth:
-				obj = ": ".join(filter(None, [clspth, obj]))
+				obj = ": ".join([_f for _f in [clspth, obj] if _f])
 	return obj
 
 
 def safe_str(obj, enc=fs_enc, errors="replace"):
 	""" Return string representation of obj """
 	obj = safe_basestring(obj)
-	if isinstance(obj, unicode):
+	if isinstance(obj, str):
 		return obj.encode(enc, errors)
 	else:
 		return obj
@@ -540,7 +540,7 @@ def safe_str(obj, enc=fs_enc, errors="replace"):
 def safe_unicode(obj, enc=fs_enc, errors="replace"):
 	""" Return unicode representation of obj """
 	obj = safe_basestring(obj)
-	if isinstance(obj, unicode):
+	if isinstance(obj, str):
 		return obj
 	else:
 		return obj.decode(enc, errors)
@@ -555,8 +555,8 @@ def strtr(txt, replacements):
 	
 	"""
 	if hasattr(replacements, "iteritems"):
-		replacements = replacements.iteritems()
-	elif isinstance(replacements, basestring):
+		replacements = iter(replacements.items())
+	elif isinstance(replacements, str):
 		for srch in replacements:
 			txt = txt.replace(srch, "")
 		return txt
@@ -583,8 +583,8 @@ def wrap(text, width = 70):
 
 
 def test():
-	for k, v in subst.iteritems():
-		print k, v
+	for k, v in subst.items():
+		print(k, v)
 
 if __name__ == "__main__":
 	test()

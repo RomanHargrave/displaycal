@@ -13,6 +13,7 @@ import subprocess as sp
 import sys
 import tempfile
 import time
+import importlib
 
 if sys.platform not in ("darwin", "win32"):
 	# Linux
@@ -35,14 +36,14 @@ else:
 				  __name__, RuntimeWarning)
 	warnings.warn("Implicitly reloading builtins", RuntimeWarning)
 	if sys.platform == "win32":
-		reload(__builtin__)
+		importlib.reload(__builtin__)
 	warnings.warn("Implicitly reloading os", RuntimeWarning)
-	reload(os)
+	importlib.reload(os)
 	warnings.warn("Implicitly reloading os.path", RuntimeWarning)
-	reload(os.path)
+	importlib.reload(os.path)
 	if sys.platform == "win32":
 		warnings.warn("Implicitly reloading win32api", RuntimeWarning)
-		reload(win32api)
+		importlib.reload(win32api)
 
 if sys.platform == "win32":
 	from win32file import *
@@ -69,11 +70,11 @@ _listdir = os.listdir
 if sys.platform == "win32":
 	# Add support for long paths (> 260 chars)
 	# and retry ERROR_SHARING_VIOLATION
-	import __builtin__
+	import builtins
 	import winerror
 	import win32api
 
-	_open = __builtin__.open
+	_open = builtins.open
 
 
 	def retry_sharing_violation_factory(fn, delay=0.25, maxretries=20):
@@ -83,7 +84,7 @@ if sys.platform == "win32":
 			while True:
 				try:
 					return fn(*args, **kwargs)
-				except WindowsError, exception:
+				except WindowsError as exception:
 					if exception.winerror == winerror.ERROR_SHARING_VIOLATION:
 						if retries < maxretries:
 							retries += 1
@@ -99,7 +100,7 @@ if sys.platform == "win32":
 		return _open(make_win32_compatible_long_path(path), *args,
 								 **kwargs)
 
-	__builtin__.open = open
+	builtins.open = open
 
 
 	_access = os.access
@@ -148,7 +149,7 @@ if sys.platform == "win32":
 
 	_mkdir = os.mkdir
 
-	def mkdir(path, mode=0777):
+	def mkdir(path, mode=0o777):
 		return _mkdir(make_win32_compatible_long_path(path, 247), mode)
 
 	os.mkdir = mkdir
@@ -156,7 +157,7 @@ if sys.platform == "win32":
 
 	_makedirs = os.makedirs
 
-	def makedirs(path, mode=0777):
+	def makedirs(path, mode=0o777):
 		return _makedirs(make_win32_compatible_long_path(path, 247), mode)
 
 	os.makedirs = makedirs
@@ -205,9 +206,9 @@ if sys.platform == "win32":
 else:
 	def listdir(path):
 		paths = _listdir(path)
-		if isinstance(path, unicode):
+		if isinstance(path, str):
 			# Undecodable filenames will still be string objects. Ignore them.
-			paths = filter(lambda path: isinstance(path, unicode), paths)
+			paths = [path for path in paths if isinstance(path, str)]
 		return paths
 
 os.listdir = listdir
@@ -250,7 +251,7 @@ def find_library(pattern, arch=None):
 		except:
 			pass
 		else:
-			# /usr/bin/python2.7: ELF 64-bit LSB shared object, x86-64,
+			# /usr/bin/python3.7: ELF 64-bit LSB shared object, x86-64,
 			# version 1 (SYSV), dynamically linked, interpreter
 			# /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0,
 			# BuildID[sha1]=41a1f0d4da3afee8f22d1947cc13a9f33f59f2b8, stripped
@@ -298,7 +299,7 @@ def expanduseru(path):
 			userhome = os.path.join(dirname(userhome), path[1:i])
 
 		return userhome + path[i:]
-	return unicode(os.path.expanduser(path), fs_enc)
+	return str(os.path.expanduser(path), fs_enc)
 
 
 def expandvarsu(path):
@@ -377,7 +378,7 @@ def expandvarsu(path):
 				res = res + c
 			index = index + 1
 		return res
-	return unicode(os.path.expandvars(path), fs_enc)
+	return str(os.path.expandvars(path), fs_enc)
 
 
 def fname_ext(path):
@@ -403,17 +404,17 @@ def get_program_file(name, foldername):
 def getenvu(name, default = None):
 	""" Unicode version of os.getenv """
 	if sys.platform == "win32":
-		name = unicode(name)
+		name = str(name)
 		# http://stackoverflow.com/questions/2608200/problems-with-umlauts-in-python-appdata-environvent-variable
 		length = ctypes.windll.kernel32.GetEnvironmentVariableW(name, None, 0)
 		if length == 0:
 			return default
-		buffer = ctypes.create_unicode_buffer(u'\0' * length)
+		buffer = ctypes.create_unicode_buffer('\0' * length)
 		ctypes.windll.kernel32.GetEnvironmentVariableW(name, buffer, length)
 		return buffer.value
 	var = os.getenv(name, default)
-	if isinstance(var, basestring):
-		return var if isinstance(var, unicode) else unicode(var, fs_enc)
+	if isinstance(var, str):
+		return var if isinstance(var, str) else str(var, fs_enc)
 
 
 def getgroups(username=None, names_only=False):
@@ -491,7 +492,7 @@ def listdir_re(path, rex = None):
 	files = os.listdir(path)
 	if rex:
 		rex = re.compile(rex, re.IGNORECASE)
-		files = filter(rex.search, files)
+		files = list(filter(rex.search, files))
 	return files
 
 
@@ -531,21 +532,21 @@ def mksfile(filename):
 
 	fname, ext = os.path.splitext(filename)
 
-	for seq in xrange(tempfile.TMP_MAX):
+	for seq in range(tempfile.TMP_MAX):
 		if not seq:
 			pth = filename
 		else:
 			pth = "%s(%i)%s" % (fname, seq, ext)
 		try:
-			fd = os.open(pth, flags, 0600)
+			fd = os.open(pth, flags, 0o600)
 			tempfile._set_cloexec(fd)
 			return (fd, os.path.abspath(pth))
-		except OSError, e:
+		except OSError as e:
 			if e.errno == errno.EEXIST:
 				continue  # Try again
 			raise
 
-	raise IOError, (errno.EEXIST, "No usable temporary file name found")
+	raise IOError(errno.EEXIST, "No usable temporary file name found")
 
 
 def movefile(src, dst, overwrite=True):
@@ -566,8 +567,8 @@ def movefile(src, dst, overwrite=True):
 
 def putenvu(name, value):
 	""" Unicode version of os.putenv (also correctly updates os.environ) """
-	if sys.platform == "win32" and isinstance(value, unicode):
-		ctypes.windll.kernel32.SetEnvironmentVariableW(unicode(name), value)
+	if sys.platform == "win32" and isinstance(value, str):
+		ctypes.windll.kernel32.SetEnvironmentVariableW(str(name), value)
 	else:
 		os.environ[name] = value.encode(fs_enc)
 
@@ -648,7 +649,7 @@ def readlink(path):
 		raise OSError(22, 'Invalid argument', path)
 
 	# Open the file correctly depending on the string type.
-	if type(path) is unicode:
+	if type(path) is str:
 		createfilefn = CreateFileW
 	else:
 		createfilefn = CreateFile
@@ -760,15 +761,15 @@ def safe_iglob(pathname):
 def safe_glob1(dirname, pattern):
 	if not dirname:
 		dirname = os.curdir
-	if isinstance(pattern, unicode) and not isinstance(dirname, unicode):
-		dirname = unicode(dirname, sys.getfilesystemencoding() or
+	if isinstance(pattern, str) and not isinstance(dirname, str):
+		dirname = str(dirname, sys.getfilesystemencoding() or
 								   sys.getdefaultencoding())
 	try:
 		names = os.listdir(dirname)
 	except os.error:
 		return []
 	if pattern[0] != '.':
-		names = filter(lambda x: x[0] != '.', names)
+		names = [x for x in names if x[0] != '.']
 	return safe_shell_filter(names, pattern)
 
 
@@ -815,7 +816,7 @@ def safe_translate(pat):
 	See https://bugs.python.org/issue738361
 	
 	"""
-	if isinstance(getattr(os.path, "altsep", None), basestring):
+	if isinstance(getattr(os.path, "altsep", None), str):
 		# Normalize path separators
 		pat = pat.replace(os.path.altsep, os.path.sep)
 	components = pat.split(os.path.sep)
@@ -866,7 +867,7 @@ def which(executable, paths = None):
 				# make sure file is actually executable
 				if os.access(filename, os.X_OK):
 					return filename
-			except Exception, exception:
+			except Exception as exception:
 				pass
 	return None
 
@@ -899,7 +900,7 @@ def whereis(names, bin=True, bin_paths=None, man=True, man_paths=None, src=True,
 		args.append("-u")
 	if list_paths:
 		args.append("-l")
-	if isinstance(names, basestring):
+	if isinstance(names, str):
 		names = [names]
 	p = sp.Popen(["whereis"] + args + names, stdout=sp.PIPE)
 	stdout, stderr = p.communicate()
@@ -970,7 +971,7 @@ class FileLock(object):
 	def _call(fn, args, exception_cls):
 		try:
 			fn(*args)
-		except FileLock._exception_cls, exception:
+		except FileLock._exception_cls as exception:
 			raise exception_cls(*exception.args)
 
 	class Error(Exception):

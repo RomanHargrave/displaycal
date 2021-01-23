@@ -67,7 +67,7 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 		for lib in libs:
 			try:
 				return init(lib, samplerate, channels, buffersize, reinit)
-			except Exception, exception:
+			except Exception as exception:
 				pass
 		raise exception
 	elif lib == "pyglet":
@@ -210,7 +210,7 @@ def safe_init(lib=None, samplerate=22050, channels=2, buffersize=2048,
 	global _initialized
 	try:
 		return init(lib, samplerate, channels, buffersize, reinit)
-	except Exception, exception:
+	except Exception as exception:
 		# So we can check if initialization failed
 		_initialized = exception
 		return exception
@@ -224,7 +224,7 @@ def Sound(filename, loop=False, raise_exceptions=False):
 	else:
 		try:
 			sound = _Sound(filename, loop)
-		except Exception, exception:
+		except Exception as exception:
 			if raise_exceptions:
 				raise
 			safe_print(exception)
@@ -328,7 +328,7 @@ class _Sound(object):
 		volume = self.volume
 		if fade_ms and ((fade_in and volume < 1) or (not fade_in and volume)):
 			count = 200
-			for i in xrange(count + 1):
+			for i in range(count + 1):
 				if fade_in:
 					self.volume = volume + i / float(count) * (1.0 - volume)
 				else:
@@ -466,7 +466,7 @@ class _Sound(object):
 			safe_init()
 		try:
 			return self.fade(fade_ms, fade_in)
-		except Exception, exception:
+		except Exception as exception:
 			return exception
 
 	def safe_play(self, fade_ms=0):
@@ -475,14 +475,14 @@ class _Sound(object):
 			safe_init()
 		try:
 			return self.play(fade_ms)
-		except Exception, exception:
+		except Exception as exception:
 			return exception
 
 	def safe_stop(self, fade_ms=0):
 		""" Like stop(), but catch any exceptions """
 		try:
 			return self.stop(fade_ms)
-		except Exception, exception:
+		except Exception as exception:
 			return exception
 
 	def stop(self, fade_ms=0):

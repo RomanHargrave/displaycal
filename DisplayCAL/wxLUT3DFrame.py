@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 import exceptions
 import os
 import re
@@ -594,7 +594,7 @@ class LUT3DFrame(BaseFrame):
 				
 			try:
 				profile_in = ICCP.ICCProfile(profile_in_path)
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
+			except (IOError, ICCP.ICCProfileInvalidError) as exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
 										 profile_in_path), parent=self)
 				return
@@ -917,7 +917,7 @@ class LUT3DFrame(BaseFrame):
 									 content_rgb_space=content_rgb_space,
 									 hdr_display=self.getcfg("3dlut.hdr_display"),
 									 XYZwp=XYZwp)
-		except Exception, exception:
+		except Exception as exception:
 			if exception.__class__.__name__ in dir(exceptions):
 				raise
 			return exception
@@ -1100,7 +1100,7 @@ class LUT3DFrame(BaseFrame):
 					show_result_dialog(Error(lang.getstr("profile.invalid") +
 											 "\n" + path),
 									   parent=self)
-			except IOError, exception:
+			except IOError as exception:
 				if not silent:
 					show_result_dialog(exception, parent=self)
 			else:
@@ -1159,7 +1159,7 @@ class LUT3DFrame(BaseFrame):
 								try:
 									odata = self.worker.xicclu(profile, (0, 0, 0),
 															   pcs="x")
-								except Exception, exception:
+								except Exception as exception:
 									show_result_dialog(exception, self)
 									self.set_profile_ctrl_path(which)
 									return
@@ -1202,7 +1202,7 @@ class LUT3DFrame(BaseFrame):
 								try:
 									odata = self.worker.xicclu(profile, (0, 0, 0),
 															   pcs="x")
-								except Exception, exception:
+								except Exception as exception:
 									show_result_dialog(exception, self)
 									self.set_profile_ctrl_path(which)
 									return
@@ -1287,7 +1287,7 @@ class LUT3DFrame(BaseFrame):
 						  fileMask=lang.getstr("filetype.icc")
 								   + "|*.icc;*.icm")
 			ctrl = getattr(self, "%s_profile_ctrl" % which)
-			for name, value in kwargs.iteritems():
+			for name, value in kwargs.items():
 				setattr(ctrl, name, value)
 
 		self.lut3d_setup_language()
@@ -1375,9 +1375,7 @@ class LUT3DFrame(BaseFrame):
 			encodings.insert(2, "T")
 		config.valid_values["3dlut.encoding.input"] = encodings
 		# collink: xvYCC output encoding is not supported
-		config.valid_values["3dlut.encoding.output"] = filter(lambda v:
-															  v not in ("T", "x", "X"),
-															  encodings)
+		config.valid_values["3dlut.encoding.output"] = [v for v in encodings if v not in ("T", "x", "X")]
 		self.encoding_input_ab = {}
 		self.encoding_input_ba = {}
 		self.encoding_output_ab = {}

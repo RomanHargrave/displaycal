@@ -20,14 +20,14 @@ else:
 	# Linux and Windows have separate files
 	if platform.architecture()[0].startswith('64'):
 		if sys.version_info[:2] == (2, 6):
-			from lib64.python26.RealDisplaySizeMM import *
+			from lib64.python36.RealDisplaySizeMM import *
 		elif sys.version_info[:2] == (2, 7):
-			from lib64.python27.RealDisplaySizeMM import *
+			from lib64.python37.RealDisplaySizeMM import *
 	else:
 		if sys.version_info[:2] == (2, 6):
-			from lib32.python26.RealDisplaySizeMM import *
+			from lib32.python36.RealDisplaySizeMM import *
 		elif sys.version_info[:2] == (2, 7):
-			from lib32.python27.RealDisplaySizeMM import *
+			from lib32.python37.RealDisplaySizeMM import *
 
 _displays = None
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+
 from binascii import hexlify
 import os
 import re
@@ -37,7 +37,7 @@ if sys.platform not in ("darwin", "win32"):
 		try:
 			Colord = DBusObject(BUSTYPE_SYSTEM, "org.freedesktop.ColorManager", 
 												"/org/freedesktop/ColorManager")
-		except DBusException, exception:
+		except DBusException as exception:
 			warnings.warn(safe_str(exception), Warning)
 
 
@@ -128,11 +128,11 @@ def client_connect():
 
 def device_connect(client, device_id):
 	""" Connect to device """
-	if isinstance(device_id, unicode):
+	if isinstance(device_id, str):
 		device_id = device_id.encode('UTF-8')
 	try:
 		device = client.find_device_sync(device_id, cancellable)
-	except Exception, exception:
+	except Exception as exception:
 		raise CDError(exception.args[0])
 
 	# Connect to device
@@ -159,7 +159,7 @@ def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 				device = Device(find("device-by-property", ["OutputEdidMd5",
 															edid["hash"]]))
 				device_id = device.properties.get("DeviceId")
-			except CDError, exception:
+			except CDError as exception:
 				warnings.warn(safe_str(exception), Warning)
 			else:
 				if device_id:
@@ -180,7 +180,7 @@ def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 			elif name == "manufacturer":
 				if quirk:
 					value = quirk_manufacturer(value)
-			elif isinstance(value, basestring) and truncate_edid_strings:
+			elif isinstance(value, str) and truncate_edid_strings:
 				# Older versions of colord used only the first 12 bytes
 				value = value[:12]
 			parts.append(str(value))
@@ -198,7 +198,7 @@ def find(what, search):
 	method_name = "_".join(part for part in what.split("-"))
 	try:
 		return getattr(Colord, "find_" + method_name)(*search)
-	except Exception, exception:
+	except Exception as exception:
 		if hasattr(exception, "get_dbus_name"):
 			if exception.get_dbus_name() == "org.freedesktop.ColorManager.NotFound":
 				raise CDObjectNotFoundError(safe_str(exception))
@@ -218,7 +218,7 @@ def get_default_profile(device_id):
 	# Get default profile
 	try:
 		properties = device.properties
-	except Exception, exception:
+	except Exception as exception:
 		raise CDError(safe_str(exception))
 	else:
 		if properties.get("ProfilingInhibitors"):
@@ -234,7 +234,7 @@ def get_default_profile(device_id):
 def get_devices_by_kind(kind):
 	if not isinstance(Colord, DBusObject):
 		return []
-	return [Device(unicode(object_path, "UTF-8"))
+	return [Device(str(object_path, "UTF-8"))
 			for object_path in Colord.get_devices_by_kind(kind)]
 
 
@@ -243,8 +243,8 @@ def get_display_devices():
 
 
 def get_display_device_ids():
-	return filter(None, (display.properties.get("DeviceId")
-						 for display in get_display_devices()))
+	return [_f for _f in (display.properties.get("DeviceId")
+						 for display in get_display_devices()) if _f]
 
 
 def get_object_path(search, object_type):
@@ -273,7 +273,7 @@ def install_profile(device_id, profile,
 	if (profile.fileName != profile_installname and
 		profile_exists):
 		if logfn:
-			logfn(u"About to overwrite existing", profile_installname)
+			logfn("About to overwrite existing", profile_installname)
 		profile.fileName = None
 
 	if profile.ID == "\0" * 16:
@@ -290,7 +290,7 @@ def install_profile(device_id, profile,
 	# writing the profile ourself first, and then importing.
 	if not profile.fileName or not profile_exists:
 		if logfn:
-			logfn(u"Writing", profile_installname)
+			logfn("Writing", profile_installname)
 		profile.fileName = profile_installname
 		profile.write()
 
@@ -302,7 +302,7 @@ def install_profile(device_id, profile,
 		# Query colord for profile
 		try:
 			cdprofile = get_object_path(profile_id, "profile")
-		except CDObjectQueryError, exception:
+		except CDObjectQueryError as exception:
 			# Profile not found
 			pass
 
@@ -330,13 +330,13 @@ def install_profile(device_id, profile,
 
 			maxtries = 3
 
-			for n in xrange(1, maxtries + 1):
+			for n in range(1, maxtries + 1):
 				if logfn:
 					logfn("Trying to import profile, attempt %i..." % n)
 				try:
 					p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 					stdout, stderr = p.communicate()
-				except Exception, exception:
+				except Exception as exception:
 					raise CDError(safe_str(exception))
 				if logfn and stdout.strip():
 					logfn(stdout.strip())
@@ -353,14 +353,14 @@ def install_profile(device_id, profile,
 
 	if not cdprofile:
 		# Query colord for newly added profile
-		for i in xrange(int(timeout / 1.0)):
+		for i in range(int(timeout / 1.0)):
 			try:
 				if Colord and not isinstance(Colord, DBusObject):
 					cdprofile = client.find_profile_sync(profile_id,
 														 cancellable)
 				else:
 					cdprofile = get_object_path(profile_id, "profile")
-			except CDObjectQueryError, exception:
+			except CDObjectQueryError as exception:
 				# Profile not found
 				pass
 			if cdprofile:
@@ -387,7 +387,7 @@ def install_profile(device_id, profile,
 		try:
 			device.add_profile_sync(Colord.DeviceRelation.HARD, cdprofile,
 									cancellable)
-		except Exception, exception:
+		except Exception as exception:
 			# Profile may already have been added
 			warnings.warn(safe_str(exception), Warning)
 
@@ -411,7 +411,7 @@ def install_profile(device_id, profile,
 		try:
 			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
-		except Exception, exception:
+		except Exception as exception:
 			raise CDError(safe_str(exception))
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
@@ -428,7 +428,7 @@ def install_profile(device_id, profile,
 		try:
 			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
-		except Exception, exception:
+		except Exception as exception:
 			raise CDError(safe_str(exception))
 		else:
 			if p.returncode != 0:
@@ -443,7 +443,7 @@ def quirk_manufacturer(manufacturer):
 		return Colord.quirk_vendor_name(manufacturer)
 
 	# Correct some company names
-	for old, new in quirk_cache['vendor_names'].iteritems():
+	for old, new in quirk_cache['vendor_names'].items():
 		if manufacturer.startswith(old):
 			manufacturer = new
 			break
@@ -465,7 +465,7 @@ class Object(DBusObject):
 			DBusObject.__init__(self, BUSTYPE_SYSTEM,
 								"org.freedesktop.ColorManager", object_path,
 								object_type)
-		except DBusException, exception:
+		except DBusException as exception:
 			raise CDError(safe_str(exception))
 		self._object_type = object_type
 
@@ -475,12 +475,12 @@ class Object(DBusObject):
 	def properties(self):
 		try:
 			properties = {}
-			for key, value in self._properties.iteritems():
+			for key, value in self._properties.items():
 				if key == "Profiles":
 					value = [Profile(object_path) for object_path in value]
 				properties[key] = value
 			return properties
-		except DBusException, exception:
+		except DBusException as exception:
 			raise CDError(safe_str(exception))
 
 
@@ -515,4 +515,4 @@ class CDTimeout(CDError):
 if __name__ == "__main__":
 	import sys
 	for arg in sys.argv[1:]:
-		print get_default_profile(arg)
+		print(get_default_profile(arg))

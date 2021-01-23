@@ -73,7 +73,7 @@ s = {
 }
 
 s["Ynorm"] = 0.0
-for e in xrange(3):
+for e in range(3):
 	s["Ynorm"] += icx_ink_table[s["iix"][e]][0][1]
 s["Ynorm"] = 1.0 / s["Ynorm"]
 
@@ -81,7 +81,7 @@ s["Ynorm"] = 1.0 / s["Ynorm"]
 def XYZ_denormalize_remove_glare(X, Y, Z):
 	XYZ = [X, Y, Z]
 	# De-Normalise Y from 1.0, & remove black glare
-	for j in xrange(3):
+	for j in range(3):
 		XYZ[j] = (XYZ[j] - icx_ink_table["K"][0][j]) / (1.0 - icx_ink_table["K"][0][j])
 		XYZ[j] /= s["Ynorm"]
 	return tuple(XYZ)
@@ -90,7 +90,7 @@ def XYZ_denormalize_remove_glare(X, Y, Z):
 def XYZ_normalize_add_glare(X, Y, Z):
 	XYZ = [X, Y, Z]
 	# Normalise Y to 1.0, & add black glare
-	for j in xrange(3):
+	for j in range(3):
 		XYZ[j] *= s["Ynorm"]
 		XYZ[j] = XYZ[j] * (1.0 - icx_ink_table["K"][0][j]) + \
 				 icx_ink_table["K"][0][j]
@@ -101,7 +101,7 @@ def RGB2XYZ(R, G, B):  # from xcolorants.c -> icxColorantLu_to_XYZ
 	d = (R, G, B)
 	# We assume a simple additive model with gamma
 	XYZ = [0.0, 0.0, 0.0]
-	for e in xrange(3):
+	for e in range(3):
 		v = d[e]
 		if (v < 0.0):
 			v = 0.0
@@ -111,7 +111,7 @@ def RGB2XYZ(R, G, B):  # from xcolorants.c -> icxColorantLu_to_XYZ
 			v /= 12.92
 		else:
 			v = math.pow((0.055 + v) / 1.055, 2.4)		# Gamma
-		for j in xrange(3):
+		for j in range(3):
 			XYZ[j] += v * icx_ink_table[s["iix"][e]][0][j]
 	return XYZ_normalize_add_glare(*XYZ)
 

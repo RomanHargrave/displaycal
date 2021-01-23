@@ -127,7 +127,7 @@ if __name__ == "__main__":
 	else:
 		pid = None
 	for handle in get_process_handles(pid):
-		print("Handle = 0x%04x, Type = 0x%02x %r, Access = 0x%06x, Name = %r" %
+		print(("Handle = 0x%04x, Type = 0x%02x %r, Access = 0x%06x, Name = %r" %
 			  (handle.HandleValue, handle.ObjectTypeIndex,
 			   get_handle_type(handle), handle.GrantedAccess,
-			   get_handle_name(handle)))
+			   get_handle_name(handle))))
